@@ -1,0 +1,248 @@
+// Skema basis data Qcare
+// Turunan langsung dari Entity Relationship Diagram (ERD) pada Bab 3 skripsi.
+// Penamaan tabel & kolom memakai snake_case (lihat @@map / @map).
+//
+// Catatan: kolom created_at / updated_at merupakan detail implementasi dan
+// tidak digambarkan pada ERD, mengikuti preseden kolom is_active.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- enum
+
+enum Role {
+  PASIEN
+  PETUGAS
+  SUPERADMIN
+
+  @@map("role_enum")
+}
+
+enum StatusAntrean {
+  MENUNGGU
+  SEDANG_DIPANGGIL
+  SEDANG_DILAYANI
+  SELESAI
+  DILEWATI
+  DIBATALKAN
+
+  @@map("status_antrean_enum")
+}
+
+enum SumberAntrean {
+  ONLINE
+  WALK_IN
+
+  @@map("sumber_antrean_enum")
+}
+
+// ---------------------------------------------------------------- master
+
+model Clinic {
+  id             BigInt   @id @default(autoincrement())
+  nama           String   @db.VarChar(150)
+  alamat         String   @db.VarChar(255)
+  jamOperasional String   @map("jam_operasional") @db.VarChar(100)
+  jenisLayanan   String   @map("jenis_layanan") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  users   User[]
+  doctors Doctor[]
+  antrean Antrean[]
+
+  @@map("clinic")
+}
+
+/// Single-table inheritance: Pasien / Petugas / Super Admin dibedakan
+/// oleh diskriminator `role`. clinic_id hanya terpakai untuk PETUGAS.
+model User {
+  id        BigInt   @id @default(autoincrement())
+  nama      String   @db.VarChar(150)
+  email     String   @unique @db.VarChar(150)
+  password  String   @db.VarChar(255)
+  noHp      String?  @map("no_hp") @db.VarChar(20)
+  role      Role     @default(PASIEN)
+  clinicId  BigInt?  @map("clinic_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  clinic        Clinic?        @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  recordPasien  RecordPasien[]
+  feedback      Feedback[]
+  notifications Notification[]
+
+  @@index([clinicId])
+  @@index([role])
+  @@map("user")
+}
+
+model Doctor {
+  id           BigInt   @id @default(autoincrement())
+  clinicId     BigInt   @map("clinic_id")
+  nama         String   @db.VarChar(150)
+  spesialisasi String   @db.VarChar(100)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  clinic            Clinic                @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  jadwalPraktik     JadwalPraktikDokter[]
+  antrean           Antrean[]
+  serviceHistory    ServiceHistory[]
+  predictionHistory PredictionHistory[]
+
+  @@index([clinicId])
+  @@map("doctor")
+}
+
+/// Data pasien yang didaftarkan oleh sebuah akun (diri sendiri atau keluarga).
+model RecordPasien {
+  id           BigInt   @id @default(autoincrement())
+  userId       BigInt   @map("user_id")
+  nama         String   @db.VarChar(150)
+  tanggalLahir DateTime @map("tanggal_lahir") @db.Date
+  jenisKelamin String   @map("jenis_kelamin") @db.VarChar(20)
+  hubungan     String   @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  antrean Antrean[]
+
+  @@index([userId])
+  @@map("record_pasien")
+}
+
+/// Template jadwal berulang mingguan (SENIN..MINGGU), bukan tanggal riil.
+model JadwalPraktikDokter {
+  id           BigInt   @id @default(autoincrement())
+  doctorId     BigInt   @map("doctor_id")
+  hari         String   @db.VarChar(10)
+  jamMulai     DateTime @map("jam_mulai") @db.Time
+  jamSelesai   DateTime @map("jam_selesai") @db.Time
+  kuotaAntrean Int      @map("kuota_antrean")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  doctor  Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  antrean Antrean[]
+
+  @@index([doctorId])
+  @@map("jadwal_praktik_dokter")
+}
+
+// ---------------------------------------------------------------- transaksi
+
+model Antrean {
+  id                  BigInt        @id @default(autoincrement())
+  recordPasienId      BigInt        @map("record_pasien_id")
+  doctorId            BigInt        @map("doctor_id")
+  clinicId            BigInt        @map("clinic_id")
+  jadwalId            BigInt        @map("jadwal_id")
+  nomorAntrean        Int           @map("nomor_antrean")
+  status              StatusAntrean @default(MENUNGGU)
+  sumber              SumberAntrean @default(ONLINE)
+  tanggal             DateTime      @db.Date
+  timestampKedatangan DateTime?     @map("timestamp_kedatangan") @db.Timestamptz
+  alasanTidakHadir    String?       @map("alasan_tidak_hadir") @db.VarChar(255)
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  recordPasien      RecordPasien        @relation(fields: [recordPasienId], references: [id], onDelete: Restrict)
+  doctor            Doctor              @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  clinic            Clinic              @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  jadwal            JadwalPraktikDokter @relation(fields: [jadwalId], references: [id], onDelete: Restrict)
+  serviceHistory    ServiceHistory?
+  predictionHistory PredictionHistory[]
+  feedback          Feedback[]
+  notifications     Notification[]
+
+  // Satu nomor antrean unik per jadwal per tanggal.
+  @@unique([jadwalId, tanggal, nomorAntrean], map: "antrean_jadwal_tanggal_nomor_key")
+  @@index([tanggal, status])
+  @@index([doctorId, tanggal])
+  @@index([recordPasienId])
+  @@index([clinicId])
+  @@map("antrean")
+}
+
+/// Dicatat saat antrean berstatus SELESAI. Menjadi dataset pelatihan
+/// model Random Forest. Relasi 1:0..1 ditegakkan oleh @unique.
+model ServiceHistory {
+  id               BigInt   @id @default(autoincrement())
+  antreanId        BigInt   @unique @map("antrean_id")
+  doctorId         BigInt   @map("doctor_id")
+  hari             String   @db.VarChar(10)
+  jam              Int
+  timestampSelesai DateTime @map("timestamp_selesai") @db.Timestamptz
+  durasiPelayanan  Int      @map("durasi_pelayanan")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  antrean Antrean @relation(fields: [antreanId], references: [id], onDelete: Cascade)
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+
+  @@index([doctorId, hari, jam])
+  @@map("service_history")
+}
+
+/// Output layanan prediksi. Setiap antrean memperoleh minimal satu prediksi
+/// saat dibuat, dan dapat bertambah saat estimasi dihitung ulang.
+model PredictionHistory {
+  id                    BigInt   @id @default(autoincrement())
+  antreanId             BigInt   @map("antrean_id")
+  doctorId              BigInt   @map("doctor_id")
+  tanggal               DateTime @db.Date
+  estimasiDurasiAntrean Int      @map("estimasi_durasi_antrean")
+  estimasiMenit         Int      @map("estimasi_menit")
+  sumberEstimasi        String   @map("sumber_estimasi") @db.VarChar(30)
+  waktuPrediksi         DateTime @default(now()) @map("waktu_prediksi") @db.Timestamptz
+
+  antrean Antrean @relation(fields: [antreanId], references: [id], onDelete: Cascade)
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+
+  @@index([antreanId])
+  @@index([doctorId, tanggal])
+  @@map("prediction_history")
+}
+
+// ---------------------------------------------------------------- pendukung
+
+model Feedback {
+  id           BigInt   @id @default(autoincrement())
+  userId       BigInt   @map("user_id")
+  antreanId    BigInt?  @map("antrean_id")
+  rating       Int?
+  isi          String   @db.Text
+  tanggalKirim DateTime @default(now()) @map("tanggal_kirim") @db.Timestamptz
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  antrean Antrean? @relation(fields: [antreanId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([antreanId])
+  @@map("feedback")
+}
+
+model Notification {
+  id          BigInt   @id @default(autoincrement())
+  userId      BigInt   @map("user_id")
+  antreanId   BigInt?  @map("antrean_id")
+  pesan       String   @db.Text
+  sudahDibaca Boolean  @default(false) @map("sudah_dibaca")
+  waktuKirim  DateTime @default(now()) @map("waktu_kirim") @db.Timestamptz
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  antrean Antrean? @relation(fields: [antreanId], references: [id], onDelete: SetNull)
+
+  @@index([userId, sudahDibaca])
+  @@index([antreanId])
+  @@map("notification")
+}

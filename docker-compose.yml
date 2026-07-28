@@ -1,0 +1,39 @@
+# PostgreSQL untuk pengembangan Qcare.
+#
+# Setiap kolaborator menjalankan `docker compose up -d` dan memperoleh
+# database yang identik, sehingga tidak perlu menyamakan password atau
+# versi PostgreSQL antar mesin.
+#
+# Port host memakai 5433 (bukan 5432) agar tidak bentrok dengan instalasi
+# PostgreSQL lokal yang mungkin sudah berjalan di mesin developer.
+#
+# Kredensial di bawah adalah kredensial DEVELOPMENT LOKAL dan sengaja
+# di-commit agar setup tim seragam. Container hanya terikat ke localhost.
+# JANGAN memakai nilai ini untuk staging maupun produksi.
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: qcare-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qcare
+      POSTGRES_PASSWORD: qcare_dev
+      POSTGRES_DB: qcare
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - qcare_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qcare -d qcare"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+volumes:
+  qcare_pgdata:
