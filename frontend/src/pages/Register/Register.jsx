@@ -1,8 +1,10 @@
 import "./Register.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 function Register() {
+  const navigate = useNavigate(); 
+  
   const [namaLengkap, setNamaLengkap] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,12 +12,12 @@ function Register() {
 
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [serverError, setServerError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); 
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => { 
     e.preventDefault(); 
-
     let isValid = true; 
-
 
     if (!email.endsWith("@gmail.com")) {
       setEmailError("Gunakan @gmail.com");
@@ -27,16 +29,46 @@ function Register() {
       isValid = false;
     }
 
+    if (password.length < 8){
+      setPasswordError("Password minimal 8 karakter")
+      isValid = false;
+    }
+
     if (!isValid) return;
 
     setEmailError("");
     setPasswordError("");
+    setServerError("");
+    setIsLoading(true);
 
-    console.log("Data siap dikirim ke backend:", {
-      namaLengkap,
-      email,
-      password,
-    });
+    try {
+      const response = await fetch("http://localhost:4000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama: namaLengkap,
+          email: email,
+          password: password,
+          konfirmasiPassword: confirmPassword
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Gagal melakukan registrasi");
+      }
+
+      alert("Registrasi berhasil! Silakan login.");
+      navigate("/"); 
+
+    } catch (error) {
+      setServerError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEmailChange = (e) => {
@@ -68,6 +100,12 @@ function Register() {
             Lengkapi data berikut untuk membuat akun
           </p>
 
+          {serverError && (
+            <div style={{ color: "red", marginBottom: "15px", fontSize: "14px", backgroundColor: "#ffe6e6", padding: "10px", borderRadius: "5px" }}>
+              {serverError}
+            </div>
+          )}
+
           <div className="input-group">
             <label>Nama Lengkap</label>
             <input
@@ -83,7 +121,7 @@ function Register() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
               <label style={{ marginBottom: "0" }}>Email</label>
               {emailError && (
-                <span className="email-error-message">*{emailError}</span>
+                <span className="email-error-message" style={{ color: "red", fontSize: "12px" }}>*{emailError}</span>
               )}
             </div>
             <input
@@ -110,7 +148,7 @@ function Register() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
               <label style={{ marginBottom: "0" }}>Konfirmasi Password</label>
               {passwordError && (
-                <span className="email-error-message">*{passwordError}</span>
+                <span className="email-error-message" style={{ color: "red", fontSize: "12px" }}>*{passwordError}</span>
               )}
             </div>
             <input
@@ -122,8 +160,8 @@ function Register() {
             />
           </div>
 
-          <button type="submit" className="register-btn">
-            Daftar
+          <button type="submit" className="register-btn" disabled={isLoading}>
+            {isLoading ? <span className="spinner"></span> : "Daftar"}
           </button>
 
           <div className="login-link">
