@@ -1,0 +1,908 @@
+/* QCARE PATIENT DATA PAGE*/
+
+.patient-page {
+  min-height: 100vh;
+
+  background: #ffffff;
+
+  color: #1f2937;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  overflow-x: hidden;
+}
+
+
+/* HEADER */
+.patient-header {
+  height: 76px;
+
+  padding: 0 5%;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  gap: 20px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #eeeeee;
+
+  box-sizing: border-box;
+}
+
+
+/* BACK BUTTON */
+
+.back-button {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  text-decoration: none;
+
+  border: 1px solid #d7e8de;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: #26734d;
+
+  font-size: 25px;
+
+  font-weight: 400;
+
+  line-height: 1;
+
+  transition: 0.2s ease;
+}
+
+.back-button:hover {
+  background: #f3f8f5;
+}
+
+
+/* LOGO */
+
+.patient-logo {
+  text-decoration: none;
+
+  color: #26734d;
+
+  font-size: 42px;
+
+  font-weight: 800;
+
+  letter-spacing: -2px;
+
+  line-height: 1;
+}
+
+
+/* MAIN */
+
+.patient-main {
+  width: min(1100px, 90%);
+
+  margin: 0 auto;
+
+  padding: 55px 0 80px;
+
+  box-sizing: border-box;
+}
+
+
+/* HEADING */
+
+.patient-heading {
+  display: grid;
+
+  grid-template-columns: 1fr 360px;
+
+  gap: 40px;
+
+  align-items: center;
+
+  margin-bottom: 35px;
+}
+
+
+/* LABEL */
+
+.heading-label {
+  display: inline-block;
+
+  margin-bottom: 10px;
+
+  color: #26734d;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.2px;
+}
+
+
+/* TITLE */
+
+.heading-content h1 {
+  margin: 0;
+
+  color: #1f2937;
+
+  font-size: 38px;
+
+  line-height: 1.2;
+}
+
+
+/* DESCRIPTION */
+
+.heading-content p {
+  margin: 12px 0 0;
+
+  color: #6b7280;
+
+  font-size: 16px;
+
+  line-height: 1.5;
+}
+
+
+/* INFORMATION BOX */
+
+.information-box {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 13px;
+
+  padding: 18px 20px;
+
+  background: #f0f8f4;
+
+  border: 1px solid #d7ebe0;
+
+  border-radius: 12px;
+
+  box-sizing: border-box;
+}
+
+
+.info-icon {
+  min-width: 24px;
+
+  width: 24px;
+  height: 24px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #26734d;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 700;
+}
+
+
+.information-box p {
+  margin: 0;
+
+  color: #4b6357;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+
+/* FORM CARD */
+
+.patient-form-card {
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 16px;
+
+  padding: 38px 42px;
+
+  box-shadow:
+    0 6px 25px rgba(0, 0, 0, 0.05);
+
+  box-sizing: border-box;
+}
+
+
+/* SECTION TITLE */
+
+.section-title {
+  margin-bottom: 25px;
+}
+
+
+.section-title h2 {
+  margin: 0;
+
+  color: #1f2937;
+
+  font-size: 20px;
+}
+
+
+.section-title p {
+  margin: 6px 0 0;
+
+  color: #737373;
+
+  font-size: 14px;
+}
+
+
+/* FORM GROUP */
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: #333333;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+/* INPUT / SELECT WRAPPER */
+
+.select-wrapper,
+.input-wrapper,
+.birth-field {
+  position: relative;
+
+  width: 100%;
+}
+
+
+/* SELECT */
+
+.select-wrapper select {
+  width: 100%;
+
+  height: 50px;
+
+  padding: 0 45px 0 44px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d6d9d7;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #333333;
+
+  font-size: 14px;
+
+  outline: none;
+
+  outline: none;
+
+  -webkit-appearance: none;
+  appearance: none;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+
+/* TEXT INPUT */
+
+.input-wrapper input {
+  width: 100%;
+
+  height: 50px;
+
+  padding: 0 15px 0 44px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d6d9d7;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #333333;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s ease;
+}
+
+
+/*  DATE / PLACE INPUT */
+
+.birth-field input {
+  width: 100%;
+
+  height: 50px;
+
+  padding: 0 14px 0 44px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d6d9d7;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #333333;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s ease;
+}
+
+
+/* CUSTOM DROPDOWN ARROW */
+
+.select-wrapper::after {
+  content: "";
+
+  position: absolute;
+
+  right: 17px;
+
+  top: 50%;
+
+  width: 8px;
+  height: 8px;
+
+  border-right: 2px solid #26734d;
+
+  border-bottom: 2px solid #26734d;
+
+  transform:
+    translateY(-65%)
+    rotate(45deg);
+
+  pointer-events: none;
+}
+
+
+/* FIELD ICON */
+
+.field-icon {
+  position: absolute;
+
+  left: 15px;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #26734d;
+
+  font-size: 17px;
+
+  pointer-events: none;
+
+  z-index: 2;
+}
+
+
+ 
+/* FOCUS */
+
+.select-wrapper select:focus,
+.input-wrapper input:focus,
+.birth-field input:focus {
+  border-color: #26734d;
+
+  box-shadow:
+    0 0 0 3px rgba(38, 115, 77, 0.1);
+}
+
+
+/* DIVIDER */
+
+.form-divider {
+  height: 1px;
+
+  margin: 35px 0;
+
+  background: #eeeeee;
+}
+
+
+/*  REGISTER OPTIONS*/
+
+.register-options {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 15px;
+}
+
+
+.register-option {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 16px;
+
+  border: 1px solid #dddddd;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+
+  box-sizing: border-box;
+}
+
+
+.register-option:hover {
+  border-color: #26734d;
+}
+
+
+.register-option.selected {
+  border-color: #26734d;
+
+  background: #f4faf7;
+}
+
+
+.register-option input {
+  display: none;
+}
+
+
+/* RADIO */
+
+.custom-radio {
+  width: 18px;
+  height: 18px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid #bdbdbd;
+
+  border-radius: 50%;
+
+  box-sizing: border-box;
+}
+
+
+.register-option.selected .custom-radio {
+  border-color: #26734d;
+}
+
+
+.radio-dot {
+  width: 9px;
+  height: 9px;
+
+  display: none;
+
+  border-radius: 50%;
+
+  background: #26734d;
+}
+
+
+.register-option.selected .radio-dot {
+  display: block;
+}
+
+
+/* REGISTER TEXT */
+
+.register-content {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+
+.register-content strong {
+  color: #333333;
+
+  font-size: 14px;
+}
+
+
+.register-content span {
+  color: #888888;
+
+  font-size: 12px;
+}
+
+
+/* BIRTH */
+
+.birth-wrapper {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 15px;
+}
+
+
+/* QUEUE BUTTON */
+
+.queue-button {
+  width: 100%;
+
+  height: 54px;
+
+  margin-top: 10px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: #26734d;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  transition: 0.2s ease;
+}
+
+
+.queue-button:hover {
+  background: #1f6040;
+
+  transform: translateY(-1px);
+}
+
+
+.queue-button:active {
+  transform: translateY(0);
+}
+
+
+.queue-button span {
+  font-size: 20px;
+}
+
+
+/* SECURITY */
+
+.data-security {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  margin-top: 15px;
+
+  color: #7b827e;
+
+  font-size: 12px;
+
+  line-height: 1.4;
+
+  text-align: center;
+}
+
+
+.data-security span {
+  color: #26734d;
+
+  font-weight: bold;
+}
+
+
+/* TABLET */
+
+@media (max-width: 900px) {
+
+  .patient-main {
+    width: 92%;
+  }
+
+
+  .patient-heading {
+    grid-template-columns: 1fr 300px;
+
+    gap: 25px;
+  }
+
+
+  .heading-content h1 {
+    font-size: 34px;
+  }
+
+
+  .patient-form-card {
+    padding: 32px;
+  }
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+  /* HEADER */
+
+  .patient-header {
+    height: 64px;
+
+    padding: 0 18px;
+
+    gap: 12px;
+  }
+
+
+  .back-button {
+    width: 36px;
+    height: 36px;
+
+    font-size: 22px;
+
+    border-radius: 50%;
+  }
+
+
+  .patient-logo {
+    font-size: 30px;
+
+    letter-spacing: -1px;
+  }
+
+
+  /* MAIN */
+
+  .patient-main {
+    width: 100%;
+    max-width: 100%;
+
+    margin: 0;
+
+    padding: 30px 18px 50px;
+
+    box-sizing: border-box;
+  }
+
+
+  /* HEADING */
+
+  .patient-heading {
+    display: block;
+
+    width: 100%;
+
+    margin-bottom: 25px;
+  }
+
+
+  .heading-label {
+    font-size: 11px;
+  }
+
+
+  .heading-content h1 {
+    font-size: 28px;
+  }
+
+
+  .heading-content p {
+    font-size: 15px;
+
+    line-height: 1.5;
+  }
+
+
+  /* INFO BOX */
+
+  .information-box {
+    width: 100%;
+
+    margin-top: 20px;
+
+    padding: 14px 15px;
+
+    box-sizing: border-box;
+  }
+
+
+  .information-box p {
+    font-size: 12px;
+  }
+
+
+  /* FORM */
+
+  .patient-form-card {
+    width: 100%;
+
+    padding: 25px 18px;
+
+    border-radius: 13px;
+
+    box-shadow: none;
+
+    box-sizing: border-box;
+  }
+
+
+  /* SECTION */
+
+  .section-title h2 {
+    font-size: 18px;
+  }
+
+
+  .section-title p {
+    font-size: 13px;
+  }
+
+
+  /* REGISTER */
+
+  .register-options {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+
+  /* BIRTH */
+
+  .birth-wrapper {
+    grid-template-columns: 1fr;
+
+    gap: 12px;
+  }
+
+
+  /* INPUTS */
+
+  .select-wrapper,
+  .input-wrapper,
+  .birth-field {
+    width: 100%;
+  }
+
+
+  .select-wrapper select,
+  .input-wrapper input,
+  .birth-field input {
+    width: 100%;
+
+    box-sizing: border-box;
+  }
+
+
+  /* BUTTON */
+
+  .queue-button {
+    height: 52px;
+
+    font-size: 14px;
+  }
+
+}
+
+
+/* SMALL MOBILE */
+
+@media (max-width: 420px) {
+
+  .patient-header {
+    padding: 0 14px;
+
+    gap: 10px;
+  }
+
+
+  .back-button {
+    width: 34px;
+    height: 34px;
+
+    font-size: 21px;
+  }
+
+
+  .patient-logo {
+    font-size: 28px;
+  }
+
+
+  .patient-main {
+    padding: 28px 14px 45px;
+  }
+
+
+  .patient-form-card {
+    padding: 22px 15px;
+  }
+
+
+  .heading-content h1 {
+    font-size: 25px;
+  }
+
+
+  .heading-content p {
+    font-size: 13px;
+  }
+
+
+  .information-box {
+    padding: 13px;
+  }
+
+
+  .information-box p {
+    font-size: 12px;
+  }
+
+}
