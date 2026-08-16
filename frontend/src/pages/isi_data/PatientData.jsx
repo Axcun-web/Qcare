@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./PatientData.css";
 
 const PatientData = () => {
+  const navigate = useNavigate();
+
   const [registerFor, setRegisterFor] = useState("self");
 
   const [formData, setFormData] = useState({
@@ -31,6 +33,9 @@ const PatientData = () => {
       registerFor,
       ...formData,
     });
+
+    // Pindah ke halaman appointments
+    navigate("/appointments");
   };
 
   return (
@@ -241,7 +246,7 @@ const PatientData = () => {
           <div className="form-divider"></div>
 
 
-          {/*  DATA PASIEN */}
+          {/* DATA PASIEN */}
           <div className="section-title">
 
             <h2>
@@ -279,9 +284,7 @@ const PatientData = () => {
                   name="registerFor"
                   value="self"
                   checked={registerFor === "self"}
-                  onChange={() =>
-                    setRegisterFor("self")
-                  }
+                  onChange={() => setRegisterFor("self")}
                 />
 
                 <div className="custom-radio">
@@ -317,9 +320,7 @@ const PatientData = () => {
                   name="registerFor"
                   value="other"
                   checked={registerFor === "other"}
-                  onChange={() =>
-                    setRegisterFor("other")
-                  }
+                  onChange={() => setRegisterFor("other")}
                 />
 
                 <div className="custom-radio">
@@ -463,7 +464,7 @@ const PatientData = () => {
           </div>
 
 
-          {/*SUBMIT*/}
+          {/* SUBMIT */}
           <button
             type="submit"
             className="queue-button"
