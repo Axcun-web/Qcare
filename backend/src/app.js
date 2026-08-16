@@ -21,7 +21,5 @@ if (config.NODE_ENV !== "test") {
 }
 
 app.use("/api", apiRoutes);
-
-// Error middleware WAJIB didaftarkan paling akhir.
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -1,9 +1,11 @@
 import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,8 +20,8 @@ function Login() {
 
     let isValid = true;
 
-    if (!email.endsWith("@gmail.com")) {
-      setEmailError("Gunakan @gmail.com"); 
+    if (!email.includes("@")) {
+      setEmailError("Masukkan email yang valid"); 
       isValid = false;
     } else {
       setEmailError("");
@@ -66,9 +68,9 @@ function Login() {
         throw new Error(errorMessage);
       }
 
-      localStorage.setItem("token", data.token); 
-      localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/dashboard"); 
+      login(data.data);
+      const role = data.data.user.role;
+      navigate(role === "SUPERADMIN" ? "/admin" : role === "PETUGAS" ? "/staff" : "/patient");
 
     } catch (error) {
       setServerError(error.message);
