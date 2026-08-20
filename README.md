@@ -55,8 +55,36 @@ cd backend
 npm install
 cp .env.example .env          # nilai default sudah cocok dengan docker-compose
 npx prisma migrate dev        # membuat tabel sesuai skema
+npm run prisma:seed           # akun SUPERADMIN + data master (lihat di bawah)
 npm run dev                   # http://localhost:4000
 ```
+
+#### Akun SUPERADMIN & data seed
+
+Registrasi mandiri **selalu** menghasilkan role `PASIEN`, dan akun `SUPERADMIN`
+hanya bisa dibuat oleh `SUPERADMIN` lain — jadi tanpa seed tidak ada cara masuk
+ke `/admin`. `prisma/seed.js` menyediakan akun pertama itu:
+
+| Field    | Nilai             |
+| -------- | ----------------- |
+| Email    | `admin@gmail.com` |
+| Password | `admin12345`      |
+| Role     | `SUPERADMIN`      |
+
+Seed juga membuat 1 klinik, 1 dokter, dan 3 jadwal praktik — tanpa itu `/admin`
+tampil kosong dan `GET /api/queues/doctors` tidak mengembalikan apa pun.
+
+- Seed **idempotent**: aman dijalankan berulang kali.
+- Pada akun yang sudah ada, **password tidak ditimpa** — hanya role yang
+  ditegakkan. Jadi jika Anda sudah memakai `admin@gmail.com` dengan password
+  sendiri, password itu tetap berlaku.
+- `npx prisma migrate reset` menjalankan seed **otomatis** setelah migrasi,
+  sehingga akun admin selalu tersedia kembali setelah reset.
+- Seed menolak berjalan bila `NODE_ENV=production`.
+
+Kredensial di atas adalah kredensial **pengembangan lokal** dan sengaja
+di-commit agar setup tim seragam, mengikuti preseden `docker-compose.yml`.
+Jangan dipakai untuk staging maupun produksi.
 
 ### 3. Frontend
 
