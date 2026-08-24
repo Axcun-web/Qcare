@@ -165,7 +165,7 @@ function Register() {
           </button>
 
           <div className="login-link">
-            Sudah memiliki akun? <Link to="/">Login</Link>
+            Sudah memiliki akun? <Link to="/Login">Login</Link>
           </div>
         </form>
       </div>
