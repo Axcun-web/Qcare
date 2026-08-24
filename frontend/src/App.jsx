@@ -5,33 +5,19 @@ import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import PatientData from "./pages/isi_data/PatientData";
-import AdminDashboard from "./pages/AdminDashboard/AdminDashboard";
-
-function RoleRoute({ roles, children }) {
-  const { user, loading } = useAuth();
-  
-  if (loading) return <div>Loading...</div>;
-  return user && roles.includes(user.role) ? children : <Navigate to="/" replace />;
-}
+import Appointments from "./pages/Appointments/Appointments";
+import Settings from "./pages/Settings/Settings";
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/patient-data" element={<PatientData />} />
-        <Route 
-          path="/admin" 
-          element={
-            <RoleRoute roles={["SUPERADMIN"]}>
-              <AdminDashboard />
-            </RoleRoute>
-          } 
-        />
-      </Routes>
-    </AuthProvider>
+    <Routes>
+      <Route path="/Login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/patient-data" element={<PatientData />} />
+      <Route path="/appointments" element={<Appointments />} />
+      <Route path="/settings" element={<Settings />} />
+    </Routes>
   );
 }
 

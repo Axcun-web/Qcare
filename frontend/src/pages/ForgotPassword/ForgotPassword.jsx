@@ -60,7 +60,7 @@ function ForgotPassword() {
                     </button>
                     
                     <div className="back-login">
-                        <Link to="/">
+                        <Link to="/Login">
                             ← Kembali ke Login
                         </Link>
                     </div>
