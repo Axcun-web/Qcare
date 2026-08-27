@@ -7,6 +7,7 @@ import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import PatientData from "./pages/isi_data/PatientData";
 import Appointments from "./pages/Appointments/Appointments";
 import Settings from "./pages/Settings/Settings";
+import PatientDashboard from "./pages/PatientDashboard/PatientDashboard";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Route path="/patient-data" element={<PatientData />} />
       <Route path="/appointments" element={<Appointments />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/patient-dashboard" element={<PatientDashboard />} />
     </Routes>
   );
 }

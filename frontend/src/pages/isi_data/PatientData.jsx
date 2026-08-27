@@ -67,7 +67,7 @@ const PatientData = () => {
 
       {/* HEADER */}
       <header className="patient-header">
-        <Link to="/" className="back-button">
+        <Link to="/patient-dashboard" className="back-button">
           ←
         </Link>
         <Link to="/" className="patient-logo">

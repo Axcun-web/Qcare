@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./Appointments.css";
 
 const Appointments = () => {
@@ -32,17 +33,17 @@ const Appointments = () => {
 
           {/* NAVIGATION */}
           <nav className="appointments-nav">
-            <a href="/">Dashboard</a>
-            <a href="#">Clinics</a>
+            <Link to="/patient-dashboard">Dashboard</Link>
+            <a href="#">Klinik</a>
 
             <a
               href="#"
               className="active"
             >
-              Appointments
+              Janji Temu
             </a>
 
-            <a href="#">History</a>
+            <a href="#">Riwayat</a>
           </nav>
 
           {/* PROFILE */}

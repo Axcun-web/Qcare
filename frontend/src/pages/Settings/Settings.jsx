@@ -37,7 +37,7 @@ const Settings = () => {
           <button
             type="button"
             className="settings-back"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/patient-dashboard")}
             aria-label="Kembali ke Dashboard"
           >
             <span className="back-arrow">←</span>
