@@ -51,7 +51,11 @@ const Settings = () => {
 
           <div className="settings-card">
             {/* UBAH NAMA */}
-            <button type="button" className="settings-item">
+            <button 
+              type="button" 
+              className="settings-item"
+              onClick={() => navigate("/ubah-nama")}
+            >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
                   <circle cx="24" cy="15" r="7" fill="none" stroke="currentColor" strokeWidth="2.5" />
@@ -69,7 +73,11 @@ const Settings = () => {
             </button>
 
             {/* UBAH PASSWORD */}
-            <button type="button" className="settings-item">
+            <button 
+              type="button" 
+              className="settings-item"
+              onClick={() => navigate("/ubah-password")}
+            >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
                   <rect x="12" y="21" width="24" height="18" rx="4" fill="none" stroke="currentColor" strokeWidth="2.5" />
