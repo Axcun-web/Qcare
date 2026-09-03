@@ -1,0 +1,163 @@
+/* ==========================================================
+   CSS UNTUK HALAMAN UBAH NAMA & UBAH PASSWORD (QCARE)
+   ========================================================== */
+
+/* Container utama untuk memusatkan card di tengah layar */
+.ubah-nama-page,
+.ubah-password-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f4f7f6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Card putih di tengah */
+.ubah-nama-card,
+.ubah-password-card {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 450px;
+  padding: 30px 30px 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+/* Top bar untuk menaruh tombol back di pojok kiri atas card */
+.ubah-nama-topbar,
+.ubah-password-topbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+}
+
+.ubah-nama-back,
+.ubah-password-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  color: #555555;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+  padding: 0;
+}
+
+.ubah-nama-back:hover,
+.ubah-password-back:hover {
+  background-color: #f0f2f1;
+  color: #437644;
+}
+
+.back-arrow {
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* Header & Logo styling */
+.ubah-nama-header,
+.ubah-password-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.qcare-logo {
+  color: #437644;
+  font-size: 36px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+}
+
+.qcare-subtitle {
+  color: #8c928f;
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Judul halaman & Deskripsi */
+.ubah-nama-title-section,
+.ubah-password-title-section {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.ubah-nama-title-section h2,
+.ubah-password-title-section h2 {
+  color: #2c332e;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.ubah-nama-title-section p,
+.ubah-password-title-section p {
+  color: #8c928f;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Form layouting */
+.ubah-nama-form,
+.ubah-password-form {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  color: #9ca3af;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* Input bergaya abu-abu solid */
+.form-group input {
+  width: 100%;
+  padding: 14px 16px;
+  background-color: #a8a8a8;
+  border: none;
+  border-radius: 8px;
+  color: #1a1a1a;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input::placeholder {
+  color: #555555;
+}
+
+.form-group input:focus {
+  outline: 2px solid #437644;
+  background-color: #b0b0b0;
+}
+
+/* Tombol Konfirmasi Hijau */
+.btn-submit {
+  width: 100%;
+  background-color: #437644;
+  color: #ffffff;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.btn-submit:hover {
+  background-color: #365f36;
+}
