@@ -42,7 +42,7 @@ const Settings = () => {
           >
             <span className="back-arrow">←</span>
           </button>
-          <h1 className="settings-title">Settings</h1>
+          <h1 className="settings-title">Pengaturan</h1>
         </div>
 
         {/* ================= AKUN ================= */}
@@ -72,7 +72,7 @@ const Settings = () => {
               <span className="item-arrow">›</span>
             </button>
 
-            {/* UBAH PASSWORD */}
+            {/* UBAH KATA SANDI */}
             <button 
               type="button" 
               className="settings-item"
@@ -90,7 +90,7 @@ const Settings = () => {
                   />
                   <circle cx="24" cy="30" r="2" fill="currentColor" />
                 </svg>
-                <span>Ubah Password</span>
+                <span>Ubah Kata Sandi</span>
               </div>
               <span className="item-arrow">›</span>
             </button>
@@ -120,7 +120,11 @@ const Settings = () => {
 
           <div className="settings-card">
             {/* TENTANG APLIKASI */}
-            <button type="button" className="settings-item">
+            <button 
+              type="button" 
+              className="settings-item"
+              onClick={() => navigate("/about-us")}
+            >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
                   <circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" strokeWidth="2.5" />
@@ -132,8 +136,12 @@ const Settings = () => {
               <span className="item-arrow">›</span>
             </button>
 
-            {/* FEEDBACK */}
-            <button type="button" className="settings-item">
+            {/* FEEDBACK / MASUKAN */}
+            <button 
+              type="button" 
+              className="settings-item"
+              onClick={() => navigate("/feedback")}
+            >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
                   <path
@@ -147,7 +155,7 @@ const Settings = () => {
                   <circle cx="24" cy="18" r="1.5" fill="currentColor" />
                   <circle cx="30" cy="18" r="1.5" fill="currentColor" />
                 </svg>
-                <span>Feedback</span>
+                <span>Masukan</span>
               </div>
               <span className="item-arrow">›</span>
             </button>
