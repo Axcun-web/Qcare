@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import './ubahPassword.css';
+import './ubahPassword.css';
 
 const UbahPassword = () => {
   const [passwordLama, setPasswordLama] = useState('');
