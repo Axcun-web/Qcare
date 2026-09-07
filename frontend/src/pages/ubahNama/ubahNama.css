@@ -1,8 +1,4 @@
-/* ==========================================================
-   CSS UNTUK HALAMAN UBAH NAMA & UBAH PASSWORD (QCARE)
-   ========================================================== */
-
-/* Container utama untuk memusatkan card di tengah layar */
+/* Container utama untuk card di tengah layar */
 .ubah-nama-page,
 .ubah-password-page {
   min-height: 100vh;
@@ -16,8 +12,8 @@
 }
 
 /* Card putih di tengah */
-.ubah-nama-card,
-.ubah-password-card {
+.ubah-nama-page .ubah-nama-card,
+.ubah-password-page .ubah-password-card {
   background-color: #ffffff;
   width: 100%;
   max-width: 450px;
@@ -28,15 +24,15 @@
 }
 
 /* Top bar untuk menaruh tombol back di pojok kiri atas card */
-.ubah-nama-topbar,
-.ubah-password-topbar {
+.ubah-nama-page .ubah-nama-topbar,
+.ubah-password-page .ubah-password-topbar {
   display: flex;
   justify-content: flex-start;
   margin-bottom: 10px;
 }
 
-.ubah-nama-back,
-.ubah-password-back {
+.ubah-nama-page .ubah-nama-back,
+.ubah-password-page .ubah-password-back {
   background: none;
   border: none;
   cursor: pointer;
@@ -52,99 +48,109 @@
   padding: 0;
 }
 
-.ubah-nama-back:hover,
-.ubah-password-back:hover {
+.ubah-nama-page .ubah-nama-back:hover,
+.ubah-password-page .ubah-password-back:hover {
   background-color: #f0f2f1;
   color: #437644;
 }
 
-.back-arrow {
+.ubah-nama-page .back-arrow,
+.ubah-password-page .back-arrow {
   font-weight: bold;
   line-height: 1;
 }
 
 /* Header & Logo styling */
-.ubah-nama-header,
-.ubah-password-header {
+.ubah-nama-page .ubah-nama-header,
+.ubah-password-page .ubah-password-header {
   text-align: center;
   margin-bottom: 24px;
 }
 
-.qcare-logo {
+.ubah-nama-page .qcare-logo,
+.ubah-password-page .qcare-logo {
   color: #437644;
   font-size: 36px;
   font-weight: 800;
   margin: 0 0 4px 0;
 }
 
-.qcare-subtitle {
+.ubah-nama-page .qcare-subtitle,
+.ubah-password-page .qcare-subtitle {
   color: #8c928f;
   font-size: 15px;
   margin: 0;
 }
 
 /* Judul halaman & Deskripsi */
-.ubah-nama-title-section,
-.ubah-password-title-section {
+.ubah-nama-page .ubah-nama-title-section,
+.ubah-password-page .ubah-password-title-section {
   text-align: center;
   margin-bottom: 24px;
 }
 
-.ubah-nama-title-section h2,
-.ubah-password-title-section h2 {
+.ubah-nama-page .ubah-nama-title-section h2,
+.ubah-password-page .ubah-password-title-section h2 {
   color: #2c332e;
   font-size: 24px;
   font-weight: 700;
   margin: 0 0 8px 0;
 }
 
-.ubah-nama-title-section p,
-.ubah-password-title-section p {
+.ubah-nama-page .ubah-nama-title-section p,
+.ubah-password-page .ubah-password-title-section p {
   color: #8c928f;
   font-size: 14px;
   margin: 0;
 }
 
 /* Form layouting */
-.ubah-nama-form,
-.ubah-password-form {
+.ubah-nama-page .ubah-nama-form,
+.ubah-password-page .ubah-password-form {
   text-align: left;
 }
 
-.form-group {
+.ubah-nama-page .form-group,
+.ubah-password-page .form-group {
   margin-bottom: 18px;
 }
 
-.form-group label {
+.ubah-nama-page .form-group label,
+.ubah-password-page .form-group label {
   display: block;
   color: #9ca3af;
   font-size: 14px;
   margin-bottom: 8px;
 }
 
-/* Input bergaya abu-abu solid */
-.form-group input {
+/* Input bergaya putih */
+.ubah-nama-page .form-group input,
+.ubah-password-page .form-group input {
   width: 100%;
   padding: 14px 16px;
-  background-color: #a8a8a8;
-  border: none;
+  background-color: #ffffff; 
+  border: 1px solid #d6d9d7; 
   border-radius: 8px;
   color: #1a1a1a;
   font-size: 14px;
   box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
-.form-group input::placeholder {
+.ubah-nama-page .form-group input::placeholder,
+.ubah-password-page .form-group input::placeholder {
   color: #555555;
 }
 
-.form-group input:focus {
+.ubah-nama-page .form-group input:focus,
+.ubah-password-page .form-group input:focus {
   outline: 2px solid #437644;
   background-color: #b0b0b0;
 }
 
 /* Tombol Konfirmasi Hijau */
-.btn-submit {
+.ubah-nama-page .btn-submit,
+.ubah-password-page .btn-submit {
   width: 100%;
   background-color: #437644;
   color: #ffffff;
@@ -158,6 +164,7 @@
   transition: background-color 0.2s;
 }
 
-.btn-submit:hover {
+.ubah-nama-page .btn-submit:hover,
+.ubah-password-page .btn-submit:hover {
   background-color: #365f36;
 }

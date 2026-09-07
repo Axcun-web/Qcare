@@ -11,12 +11,12 @@ const PatientDashboard = () => {
     <div className="dashboard-page">
       {/* HEADER */}
       <header className="dashboard-header">
-        <Link to="/patient-dashboard" className="logo">
+        <Link to="/patient" className="logo">
           QCare
         </Link>
         
         <nav className="header-nav">
-          <Link to="/patient-dashboard" className="nav-link active">
+          <Link to="/patient" className="nav-link active">
             Dashboard
           </Link>
           <Link to="/clinics" className="nav-link">
