@@ -1,0 +1,306 @@
+/* =========================================
+   BASE DASHBOARD LAYOUT STYLES
+========================================= */
+.dashboard-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #1f2937;
+  font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  height: 72px;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 40px;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: 800;
+  color: #26734d;
+  text-decoration: none;
+  letter-spacing: -1px;
+}
+
+.header-nav {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 24px 0;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: #1f2937;
+}
+
+.nav-link.active {
+  color: #26734d;
+  border-bottom-color: #26734d;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-pic {
+  width: 36px;
+  height: 36px;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+}
+
+.profile-pic:hover {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  z-index: 100;
+  padding: 8px 0;
+}
+
+.profile-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  text-align: left;
+  width: 100%;
+}
+
+.profile-dropdown button:hover {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.dashboard-main {
+  flex: 1;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.dashboard-footer {
+  border-top: 1px solid #e5e7eb;
+  padding: 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 13px;
+}
+
+.footer-links strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.footer-links a {
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: #111827;
+}
+
+.footer-copyright {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* =========================================
+   CLINIC DIRECTORY STYLES
+========================================= */
+.directory-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.clinic-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.clinic-info h2 {
+  margin: 0.5rem 0;
+  font-size: 1.25rem;
+}
+
+.clinic-info .address {
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.clinic-info .hours {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.doctor-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+}
+
+.doctor-section h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.doctor-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.doctor-list li {
+  display: flex;
+  flex-direction: column;
+}
+
+.doctor-list li strong {
+  color: #0f172a;
+}
+
+.doctor-list li span {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.directory-message {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+  font-size: 1.125rem;
+  flex: 1;
+}
+
+.directory-message.error {
+  color: #ef4444;
+}
+
+/* =========================================
+   RESPONSIVE LAYOUT adjustments
+========================================= */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 15px 20px 0;
+    gap: 15px;
+  }
+  
+  .logo {
+    flex: 1;
+  }
+
+  .header-nav {
+    width: 100%;
+    flex: none;
+    overflow-x: auto;
+    gap: 20px;
+    padding-bottom: 2px;
+    -ms-overflow-style: none;  
+    scrollbar-width: none;  
+  }
+
+  .header-nav::-webkit-scrollbar {
+    display: none; 
+  }
+  
+  .nav-link {
+    padding: 12px 0; 
+  }
+
+  .dashboard-footer {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 24px 20px;
+  }
+  
+  .footer-links {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}

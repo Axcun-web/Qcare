@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
 import "./AdminDashboard.css";
+import { useNavigate } from "react-router-dom";
 
 const emptyClinic = { nama: "", alamat: "", jamOperasional: "", jenisLayanan: "" };
 
 export default function AdminDashboard() { 
+  const navigate = useNavigate();
   const { user, logout } = useAuth(); 
   const [tab, setTab] = useState("clinics"), 
         [clinics, setClinics] = useState([]), 
@@ -14,6 +16,13 @@ export default function AdminDashboard() {
         [editing, setEditing] = useState(null), 
         [detail, setDetail] = useState(null), 
         [message, setMessage] = useState("");
+
+  const handleLogout = () => {
+    if (logout) {
+      logout(); 
+    }
+    navigate('/login');
+  };
 
   const load = () => Promise.all([api("/admin/clinics"), api("/admin/users"), api("/admin/feedback")])
     .then(([c,u,f]) => { setClinics(c.data); setUsers(u.data); setFeedback(f.data); })
@@ -61,7 +70,6 @@ export default function AdminDashboard() {
     } catch (err) { setMessage(err.message); } 
   };
 
-  // --- NEW: Edit/Delete Handlers for Doctors and Staff ---
   const deleteDoctor = async (id) => {
     if (!window.confirm("Hapus dokter ini?")) return;
     try {
@@ -119,7 +127,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-page">
-      <header><div><b>QCare</b><small>SUPERADMIN CONSOLE</small></div><div>{user?.nama}<button onClick={logout}>Keluar</button></div></header>
+      <header><div><b>QCare</b><small>SUPERADMIN CONSOLE</small></div><div>{user?.nama}<button onClick={handleLogout}>Log Out</button></div></header>
       <main>
         <p className="admin-kicker">MANAJEMEN SISTEM</p><h1>Administrasi QCare</h1>
         <nav className="admin-tabs">{[["clinics","Klinik"],["users","User"],["feedback","Feedback"]].map(([id,name]) => <button className={tab===id?"selected":""} onClick={() => setTab(id)} key={id}>{name}</button>)}</nav>
