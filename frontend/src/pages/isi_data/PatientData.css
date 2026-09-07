@@ -1,4 +1,4 @@
-/* QCARE PATIENT DATA PAGE*/
+/* QCARE PATIENT DATA PAGE */
 
 .patient-page {
   min-height: 100vh;
@@ -9,7 +9,7 @@
 }
 
 /* HEADER */
-.patient-header {
+.patient-page .patient-header {
   height: 76px;
   padding: 0 5%;
   display: flex;
@@ -22,7 +22,7 @@
 }
 
 /* BACK BUTTON */
-.back-button {
+.patient-page .back-button {
   width: 42px;
   height: 42px;
   display: flex;
@@ -40,12 +40,12 @@
   transition: 0.2s ease;
 }
 
-.back-button:hover {
+.patient-page .back-button:hover {
   background: #f3f8f5;
 }
 
 /* LOGO */
-.patient-logo {
+.patient-page .patient-logo {
   text-decoration: none;
   color: #26734d;
   font-size: 42px;
@@ -55,7 +55,7 @@
 }
 
 /* MAIN */
-.patient-main {
+.patient-page .patient-main {
   width: min(1100px, 90%);
   margin: 0 auto;
   padding: 55px 0 80px;
@@ -63,7 +63,7 @@
 }
 
 /* HEADING */
-.patient-heading {
+.patient-page .patient-heading {
   display: grid;
   grid-template-columns: 1fr 360px;
   gap: 40px;
@@ -72,7 +72,7 @@
 }
 
 /* LABEL */
-.heading-label {
+.patient-page .heading-label {
   display: inline-block;
   margin-bottom: 10px;
   color: #26734d;
@@ -82,7 +82,7 @@
 }
 
 /* TITLE */
-.heading-content h1 {
+.patient-page .heading-content h1 {
   margin: 0;
   color: #1f2937;
   font-size: 38px;
@@ -90,7 +90,7 @@
 }
 
 /* DESCRIPTION */
-.heading-content p {
+.patient-page .heading-content p {
   margin: 12px 0 0;
   color: #6b7280;
   font-size: 16px;
@@ -98,7 +98,7 @@
 }
 
 /* INFORMATION BOX */
-.information-box {
+.patient-page .information-box {
   display: flex;
   align-items: flex-start;
   gap: 13px;
@@ -109,7 +109,7 @@
   box-sizing: border-box;
 }
 
-.info-icon {
+.patient-page .info-icon {
   min-width: 24px;
   width: 24px;
   height: 24px;
@@ -123,7 +123,7 @@
   font-weight: 700;
 }
 
-.information-box p {
+.patient-page .information-box p {
   margin: 0;
   color: #4b6357;
   font-size: 13px;
@@ -131,7 +131,7 @@
 }
 
 /* FORM CARD */
-.patient-form-card {
+.patient-page .patient-form-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
@@ -141,28 +141,28 @@
 }
 
 /* SECTION TITLE */
-.section-title {
+.patient-page .section-title {
   margin-bottom: 25px;
 }
 
-.section-title h2 {
+.patient-page .section-title h2 {
   margin: 0;
   color: #1f2937;
   font-size: 20px;
 }
 
-.section-title p {
+.patient-page .section-title p {
   margin: 6px 0 0;
   color: #737373;
   font-size: 14px;
 }
 
 /* FORM GROUP */
-.form-group {
+.patient-page .form-group {
   margin-bottom: 25px;
 }
 
-.form-group label {
+.patient-page .form-group label {
   display: block;
   margin-bottom: 9px;
   color: #333333;
@@ -171,26 +171,27 @@
 }
 
 /* INPUT / SELECT WRAPPER */
-.select-wrapper,
-.input-wrapper,
-.birth-field {
+.patient-page .select-wrapper,
+.patient-page .input-wrapper,
+.patient-page .birth-field {
   position: relative;
   width: 100%;
 }
 
 /* CUSTOM SPACING UNTUK INPUT LAINNYA */
-.other-complaint-input {
+.patient-page .other-complaint-input {
   margin-top: 15px;
 }
 
 /* SELECT */
-.select-wrapper select {
+.patient-page .select-wrapper select {
   width: 100%;
   height: 50px;
   padding: 0 45px 0 44px;
   box-sizing: border-box;
   border: 1px solid #d6d9d7;
   border-radius: 8px;
+  background-color: #ffffff;
   background: #ffffff;
   color: #333333;
   font-size: 14px;
@@ -202,13 +203,14 @@
 }
 
 /* TEXT INPUT */
-.input-wrapper input {
+.patient-page .input-wrapper input {
   width: 100%;
   height: 50px;
   padding: 0 15px 0 44px;
   box-sizing: border-box;
   border: 1px solid #d6d9d7;
   border-radius: 8px;
+  background-color: #ffffff;
   background: #ffffff;
   color: #333333;
   font-size: 14px;
@@ -217,13 +219,14 @@
 }
 
 /* DATE / PLACE INPUT */
-.birth-field input {
+.patient-page .birth-field input {
   width: 100%;
   height: 50px;
   padding: 0 14px 0 44px;
   box-sizing: border-box;
   border: 1px solid #d6d9d7;
   border-radius: 8px;
+  background-color: #ffffff;
   background: #ffffff;
   color: #333333;
   font-size: 14px;
@@ -232,7 +235,7 @@
 }
 
 /* CUSTOM DROPDOWN ARROW */
-.select-wrapper::after {
+.patient-page .select-wrapper::after {
   content: "";
   position: absolute;
   right: 17px;
@@ -246,7 +249,7 @@
 }
 
 /* FIELD ICON */
-.field-icon {
+.patient-page .field-icon {
   position: absolute;
   left: 15px;
   top: 50%;
@@ -258,28 +261,28 @@
 }
 
 /* FOCUS */
-.select-wrapper select:focus,
-.input-wrapper input:focus,
-.birth-field input:focus {
+.patient-page .select-wrapper select:focus,
+.patient-page .input-wrapper input:focus,
+.patient-page .birth-field input:focus {
   border-color: #26734d;
   box-shadow: 0 0 0 3px rgba(38, 115, 77, 0.1);
 }
 
 /* DIVIDER */
-.form-divider {
+.patient-page .form-divider {
   height: 1px;
   margin: 35px 0;
   background: #eeeeee;
 }
 
-/* REGISTER OPTIONS*/
-.register-options {
+/* REGISTER OPTIONS */
+.patient-page .register-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
-.register-option {
+.patient-page .register-option {
   position: relative;
   display: flex;
   align-items: center;
@@ -292,21 +295,21 @@
   box-sizing: border-box;
 }
 
-.register-option:hover {
+.patient-page .register-option:hover {
   border-color: #26734d;
 }
 
-.register-option.selected {
+.patient-page .register-option.selected {
   border-color: #26734d;
   background: #f4faf7;
 }
 
-.register-option input {
+.patient-page .register-option input {
   display: none;
 }
 
 /* RADIO */
-.custom-radio {
+.patient-page .custom-radio {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
@@ -318,11 +321,11 @@
   box-sizing: border-box;
 }
 
-.register-option.selected .custom-radio {
+.patient-page .register-option.selected .custom-radio {
   border-color: #26734d;
 }
 
-.radio-dot {
+.patient-page .radio-dot {
   width: 9px;
   height: 9px;
   display: none;
@@ -330,36 +333,36 @@
   background: #26734d;
 }
 
-.register-option.selected .radio-dot {
+.patient-page .register-option.selected .radio-dot {
   display: block;
 }
 
 /* REGISTER TEXT */
-.register-content {
+.patient-page .register-content {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.register-content strong {
+.patient-page .register-content strong {
   color: #333333;
   font-size: 14px;
 }
 
-.register-content span {
+.patient-page .register-content span {
   color: #888888;
   font-size: 12px;
 }
 
 /* BIRTH */
-.birth-wrapper {
+.patient-page .birth-wrapper {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
 /* QUEUE BUTTON */
-.queue-button {
+.patient-page .queue-button {
   width: 100%;
   height: 54px;
   margin-top: 10px;
@@ -377,21 +380,21 @@
   transition: 0.2s ease;
 }
 
-.queue-button:hover {
+.patient-page .queue-button:hover {
   background: #1f6040;
   transform: translateY(-1px);
 }
 
-.queue-button:active {
+.patient-page .queue-button:active {
   transform: translateY(0);
 }
 
-.queue-button span {
+.patient-page .queue-button span {
   font-size: 20px;
 }
 
 /* SECURITY */
-.data-security {
+.patient-page .data-security {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -403,109 +406,109 @@
   text-align: center;
 }
 
-.data-security span {
+.patient-page .data-security span {
   color: #26734d;
   font-weight: bold;
 }
 
 /* TABLET */
 @media (max-width: 900px) {
-  .patient-main {
+  .patient-page .patient-main {
     width: 92%;
   }
-  .patient-heading {
+  .patient-page .patient-heading {
     grid-template-columns: 1fr 300px;
     gap: 25px;
   }
-  .heading-content h1 {
+  .patient-page .heading-content h1 {
     font-size: 34px;
   }
-  .patient-form-card {
+  .patient-page .patient-form-card {
     padding: 32px;
   }
 }
 
 /* MOBILE */
 @media (max-width: 768px) {
-  .patient-header {
+  .patient-page .patient-header {
     height: 64px;
     padding: 0 18px;
     gap: 12px;
   }
-  .back-button {
+  .patient-page .back-button {
     width: 36px;
     height: 36px;
     font-size: 22px;
     border-radius: 50%;
   }
-  .patient-logo {
+  .patient-page .patient-logo {
     font-size: 30px;
     letter-spacing: -1px;
   }
-  .patient-main {
+  .patient-page .patient-main {
     width: 100%;
     max-width: 100%;
     margin: 0;
     padding: 30px 18px 50px;
     box-sizing: border-box;
   }
-  .patient-heading {
+  .patient-page .patient-heading {
     display: block;
     width: 100%;
     margin-bottom: 25px;
   }
-  .heading-label {
+  .patient-page .heading-label {
     font-size: 11px;
   }
-  .heading-content h1 {
+  .patient-page .heading-content h1 {
     font-size: 28px;
   }
-  .heading-content p {
+  .patient-page .heading-content p {
     font-size: 15px;
     line-height: 1.5;
   }
-  .information-box {
+  .patient-page .information-box {
     width: 100%;
     margin-top: 20px;
     padding: 14px 15px;
     box-sizing: border-box;
   }
-  .information-box p {
+  .patient-page .information-box p {
     font-size: 12px;
   }
-  .patient-form-card {
+  .patient-page .patient-form-card {
     width: 100%;
     padding: 25px 18px;
     border-radius: 13px;
     box-shadow: none;
     box-sizing: border-box;
   }
-  .section-title h2 {
+  .patient-page .section-title h2 {
     font-size: 18px;
   }
-  .section-title p {
+  .patient-page .section-title p {
     font-size: 13px;
   }
-  .register-options {
+  .patient-page .register-options {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-  .birth-wrapper {
+  .patient-page .birth-wrapper {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  .select-wrapper,
-  .input-wrapper,
-  .birth-field {
+  .patient-page .select-wrapper,
+  .patient-page .input-wrapper,
+  .patient-page .birth-field {
     width: 100%;
   }
-  .select-wrapper select,
-  .input-wrapper input,
-  .birth-field input {
+  .patient-page .select-wrapper select,
+  .patient-page .input-wrapper input,
+  .patient-page .birth-field input {
     width: 100%;
     box-sizing: border-box;
   }
-  .queue-button {
+  .patient-page .queue-button {
     height: 52px;
     font-size: 14px;
   }
@@ -513,34 +516,34 @@
 
 /* SMALL MOBILE */
 @media (max-width: 420px) {
-  .patient-header {
+  .patient-page .patient-header {
     padding: 0 14px;
     gap: 10px;
   }
-  .back-button {
+  .patient-page .back-button {
     width: 34px;
     height: 34px;
     font-size: 21px;
   }
-  .patient-logo {
+  .patient-page .patient-logo {
     font-size: 28px;
   }
-  .patient-main {
+  .patient-page .patient-main {
     padding: 28px 14px 45px;
   }
-  .patient-form-card {
+  .patient-page .patient-form-card {
     padding: 22px 15px;
   }
-  .heading-content h1 {
+  .patient-page .heading-content h1 {
     font-size: 25px;
   }
-  .heading-content p {
+  .patient-page .heading-content p {
     font-size: 13px;
   }
-  .information-box {
+  .patient-page .information-box {
     padding: 13px;
   }
-  .information-box p {
+  .patient-page .information-box p {
     font-size: 12px;
   }
 }
