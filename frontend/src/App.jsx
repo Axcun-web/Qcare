@@ -10,12 +10,13 @@ import Settings from "./pages/Settings/Settings";
 import PatientDashboard from "./pages/PatientDashboard/PatientDashboard";
 import AdminDashboard from "./pages/AdminDashboard/AdminDashboard";
 import Clinics from "./pages/Clinics/Clinics";
+import History from "./pages/History/History";
 import UbahNama from "./pages/ubahNama/ubahNama";
 import UbahPassword from "./pages/ubahPassword/ubahPassword";
 
 function App() {
   return (
-    <AuthProvider>  
+    <AuthProvider>
       <Routes>
         <Route path="/Login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -26,6 +27,7 @@ function App() {
         <Route path="/patient" element={<PatientDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/clinics" element={<Clinics />} />
+        <Route path="/history" element={<History />} />
         <Route path="/ubah-nama" element={<UbahNama />} />
         <Route path="/ubah-password" element={<UbahPassword />} />
       </Routes>
