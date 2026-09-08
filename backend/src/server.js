@@ -2,6 +2,7 @@ import { app } from "./app.js";
 import { config } from "./config/index.js";
 import { prisma } from "./config/prisma.js";
 import { logger } from "./utils/logger.js";
+import "./utils/bigintJson.js";
 
 const server = app.listen(config.PORT, () => {
   logger.info(

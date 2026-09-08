@@ -1,100 +1,148 @@
 /* QCARE PATIENT DATA PAGE */
-
 .patient-page {
   min-height: 100vh;
-  background: #ffffff;
+  background: #f9fafb; /* Latar belakang halaman lebih soft */
   color: #1f2937;
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
 }
 
-/* HEADER */
-.patient-page .patient-header {
-  height: 76px;
-  padding: 0 5%;
+/* =========================================
+   NAVBAR (Konsisten dengan Dashboard)
+========================================= */
+.dashboard-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 20px;
+  padding: 0 40px;
+  height: 72px;
   background: #ffffff;
-  border-bottom: 1px solid #eeeeee;
-  box-sizing: border-box;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 40px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
-/* BACK BUTTON */
-.patient-page .back-button {
-  width: 42px;
-  height: 42px;
+.logo {
+  font-size: 28px;
+  font-weight: 800;
+  color: #26734d;
+  text-decoration: none;
+  letter-spacing: -1px;
+}
+
+.header-nav {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 24px 0;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.nav-link:hover { color: #1f2937; }
+.nav-link.active {
+  color: #26734d;
+  border-bottom-color: #26734d;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-pic {
+  width: 36px;
+  height: 36px;
+  background-color: #f3f4f6;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  text-decoration: none;
-  border: 1px solid #d7e8de;
-  border-radius: 50%;
+  color: #4b5563;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
   background: #ffffff;
-  color: #26734d;
-  font-size: 25px;
-  font-weight: 400;
-  line-height: 1;
-  transition: 0.2s ease;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  z-index: 100;
+  padding: 8px 0;
 }
 
-.patient-page .back-button:hover {
-  background: #f3f8f5;
+.profile-dropdown button {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  text-align: left;
+  width: 100%;
 }
 
-/* LOGO */
-.patient-page .patient-logo {
-  text-decoration: none;
-  color: #26734d;
-  font-size: 42px;
-  font-weight: 800;
-  letter-spacing: -2px;
-  line-height: 1;
-}
+.profile-dropdown button:hover { background-color: #f9fafb; }
 
-/* MAIN */
+/* =========================================
+   MAIN LAYOUT
+========================================= */
 .patient-page .patient-main {
-  width: min(1100px, 90%);
+  width: min(900px, 90%);
   margin: 0 auto;
-  padding: 55px 0 80px;
-  box-sizing: border-box;
+  padding: 40px 0 80px;
 }
 
 /* HEADING */
 .patient-page .patient-heading {
   display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 40px;
+  grid-template-columns: 1fr 320px;
+  gap: 30px;
   align-items: center;
   margin-bottom: 35px;
 }
 
-/* LABEL */
 .patient-page .heading-label {
   display: inline-block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #26734d;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.2px;
 }
 
-/* TITLE */
 .patient-page .heading-content h1 {
   margin: 0;
-  color: #1f2937;
-  font-size: 38px;
-  line-height: 1.2;
+  font-size: 32px;
+  color: #111827;
 }
 
-/* DESCRIPTION */
 .patient-page .heading-content p {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: #6b7280;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 15px;
 }
 
 /* INFORMATION BOX */
@@ -102,32 +150,23 @@
   display: flex;
   align-items: flex-start;
   gap: 13px;
-  padding: 18px 20px;
-  background: #f0f8f4;
-  border: 1px solid #d7ebe0;
+  padding: 16px;
+  background: #eef6f1;
+  border: 1px solid #c9e2d4;
   border-radius: 12px;
-  box-sizing: border-box;
 }
 
 .patient-page .info-icon {
   min-width: 24px;
-  width: 24px;
   height: 24px;
+  background: #26734d;
+  color: #fff;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: #26734d;
-  color: #ffffff;
+  font-weight: bold;
   font-size: 14px;
-  font-weight: 700;
-}
-
-.patient-page .information-box p {
-  margin: 0;
-  color: #4b6357;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 /* FORM CARD */
@@ -135,42 +174,24 @@
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 38px 42px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
-  box-sizing: border-box;
+  padding: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-/* SECTION TITLE */
-.patient-page .section-title {
-  margin-bottom: 25px;
-}
+.patient-page .section-title { margin-bottom: 24px; }
+.patient-page .section-title h2 { margin: 0; font-size: 20px; color: #111827; }
+.patient-page .section-title p { margin: 4px 0 0; color: #6b7280; font-size: 14px; }
 
-.patient-page .section-title h2 {
-  margin: 0;
-  color: #1f2937;
-  font-size: 20px;
-}
-
-.patient-page .section-title p {
-  margin: 6px 0 0;
-  color: #737373;
-  font-size: 14px;
-}
-
-/* FORM GROUP */
-.patient-page .form-group {
-  margin-bottom: 25px;
-}
-
+/* INPUT & SELECT WRAPPERS */
+.patient-page .form-group { margin-bottom: 24px; }
 .patient-page .form-group label {
   display: block;
-  margin-bottom: 9px;
-  color: #333333;
+  margin-bottom: 8px;
+  color: #374151;
   font-size: 14px;
   font-weight: 600;
 }
 
-/* INPUT / SELECT WRAPPER */
 .patient-page .select-wrapper,
 .patient-page .input-wrapper,
 .patient-page .birth-field {
@@ -178,125 +199,86 @@
   width: 100%;
 }
 
-/* CUSTOM SPACING UNTUK INPUT LAINNYA */
-.patient-page .other-complaint-input {
-  margin-top: 15px;
+/* MENCEGAH BACKGROUND MENJADI ABU-ABU / KUNING (Autofill Fix) */
+.patient-page input:-webkit-autofill,
+.patient-page select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
-/* SELECT */
-.patient-page .select-wrapper select {
-  width: 100%;
-  height: 50px;
-  padding: 0 45px 0 44px;
-  box-sizing: border-box;
-  border: 1px solid #d6d9d7;
-  border-radius: 8px;
-  background-color: #ffffff;
-  background: #ffffff;
-  color: #333333;
-  font-size: 14px;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-/* TEXT INPUT */
-.patient-page .input-wrapper input {
-  width: 100%;
-  height: 50px;
-  padding: 0 15px 0 44px;
-  box-sizing: border-box;
-  border: 1px solid #d6d9d7;
-  border-radius: 8px;
-  background-color: #ffffff;
-  background: #ffffff;
-  color: #333333;
-  font-size: 14px;
-  outline: none;
-  transition: 0.2s ease;
-}
-
-/* DATE / PLACE INPUT */
+/* INPUT STYLES */
+.patient-page .select-wrapper select,
+.patient-page .input-wrapper input,
 .patient-page .birth-field input {
   width: 100%;
-  height: 50px;
-  padding: 0 14px 0 44px;
-  box-sizing: border-box;
-  border: 1px solid #d6d9d7;
+  height: 48px;
+  padding: 0 16px 0 44px;
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
-  background-color: #ffffff;
-  background: #ffffff;
-  color: #333333;
+  color: #111827;
   font-size: 14px;
   outline: none;
-  transition: 0.2s ease;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* CUSTOM DROPDOWN ARROW */
-.patient-page .select-wrapper::after {
-  content: "";
-  position: absolute;
-  right: 17px;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid #26734d;
-  border-bottom: 2px solid #26734d;
-  transform: translateY(-65%) rotate(45deg);
-  pointer-events: none;
+.patient-page .select-wrapper select {
+  padding-right: 40px;
+  appearance: none;
+  cursor: pointer;
 }
 
-/* FIELD ICON */
-.patient-page .field-icon {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #26734d;
-  font-size: 17px;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* FOCUS */
+/* FOCUS STATE NORMAL (Hanya border & glow hijau muda) */
 .patient-page .select-wrapper select:focus,
 .patient-page .input-wrapper input:focus,
 .patient-page .birth-field input:focus {
   border-color: #26734d;
+  background-color: #ffffff !important;
   box-shadow: 0 0 0 3px rgba(38, 115, 77, 0.1);
 }
 
-/* DIVIDER */
-.patient-page .form-divider {
-  height: 1px;
-  margin: 35px 0;
-  background: #eeeeee;
+.patient-page .field-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 16px;
+  pointer-events: none;
 }
 
-/* REGISTER OPTIONS */
+/* SELECT ARROW */
+.patient-page .select-wrapper::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #6b7280;
+  border-bottom: 2px solid #6b7280;
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+/* RADIO BUTTON OPTIONS */
 .patient-page .register-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 16px;
 }
 
 .patient-page .register-option {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 12px;
   padding: 16px;
-  border: 1px solid #dddddd;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   cursor: pointer;
+  background: #ffffff;
   transition: 0.2s ease;
-  box-sizing: border-box;
-}
-
-.patient-page .register-option:hover {
-  border-color: #26734d;
 }
 
 .patient-page .register-option.selected {
@@ -304,246 +286,59 @@
   background: #f4faf7;
 }
 
-.patient-page .register-option input {
-  display: none;
-}
-
-/* RADIO */
+.patient-page .register-option input { display: none; }
 .patient-page .custom-radio {
   width: 18px;
   height: 18px;
-  flex-shrink: 0;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #bdbdbd;
-  border-radius: 50%;
-  box-sizing: border-box;
 }
-
-.patient-page .register-option.selected .custom-radio {
-  border-color: #26734d;
-}
-
+.patient-page .register-option.selected .custom-radio { border-color: #26734d; }
 .patient-page .radio-dot {
-  width: 9px;
-  height: 9px;
-  display: none;
-  border-radius: 50%;
+  width: 10px;
+  height: 10px;
   background: #26734d;
+  border-radius: 50%;
+  display: none;
 }
+.patient-page .register-option.selected .radio-dot { display: block; }
+.patient-page .register-content strong { color: #111827; font-size: 14px; display: block; }
+.patient-page .register-content span { color: #6b7280; font-size: 12px; }
 
-.patient-page .register-option.selected .radio-dot {
-  display: block;
-}
+/* BIRTH WRAPPER */
+.patient-page .birth-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.patient-page .form-divider { height: 1px; background: #e5e7eb; margin: 30px 0; }
 
-/* REGISTER TEXT */
-.patient-page .register-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.patient-page .register-content strong {
-  color: #333333;
-  font-size: 14px;
-}
-
-.patient-page .register-content span {
-  color: #888888;
-  font-size: 12px;
-}
-
-/* BIRTH */
-.patient-page .birth-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-/* QUEUE BUTTON */
+/* BUTTON */
 .patient-page .queue-button {
   width: 100%;
-  height: 54px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 9px;
+  height: 52px;
   background: #26734d;
   color: #ffffff;
+  border: none;
+  border-radius: 8px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  transition: 0.2s ease;
+  gap: 8px;
+  margin-top: 10px;
+  transition: 0.2s;
 }
 
-.patient-page .queue-button:hover {
-  background: #1f6040;
-  transform: translateY(-1px);
-}
+.patient-page .queue-button:hover { background: #1e5c3e; }
+.patient-page .queue-button:disabled { background: #9ca3af; cursor: not-allowed; }
 
-.patient-page .queue-button:active {
-  transform: translateY(0);
-}
-
-.patient-page .queue-button span {
-  font-size: 20px;
-}
-
-/* SECURITY */
-.patient-page .data-security {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 15px;
-  color: #7b827e;
-  font-size: 12px;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.patient-page .data-security span {
-  color: #26734d;
-  font-weight: bold;
-}
-
-/* TABLET */
-@media (max-width: 900px) {
-  .patient-page .patient-main {
-    width: 92%;
-  }
-  .patient-page .patient-heading {
-    grid-template-columns: 1fr 300px;
-    gap: 25px;
-  }
-  .patient-page .heading-content h1 {
-    font-size: 34px;
-  }
-  .patient-page .patient-form-card {
-    padding: 32px;
-  }
-}
-
-/* MOBILE */
+/* MOBILE RESPONSIVE */
 @media (max-width: 768px) {
-  .patient-page .patient-header {
-    height: 64px;
-    padding: 0 18px;
-    gap: 12px;
-  }
-  .patient-page .back-button {
-    width: 36px;
-    height: 36px;
-    font-size: 22px;
-    border-radius: 50%;
-  }
-  .patient-page .patient-logo {
-    font-size: 30px;
-    letter-spacing: -1px;
-  }
-  .patient-page .patient-main {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 30px 18px 50px;
-    box-sizing: border-box;
-  }
-  .patient-page .patient-heading {
-    display: block;
-    width: 100%;
-    margin-bottom: 25px;
-  }
-  .patient-page .heading-label {
-    font-size: 11px;
-  }
-  .patient-page .heading-content h1 {
-    font-size: 28px;
-  }
-  .patient-page .heading-content p {
-    font-size: 15px;
-    line-height: 1.5;
-  }
-  .patient-page .information-box {
-    width: 100%;
-    margin-top: 20px;
-    padding: 14px 15px;
-    box-sizing: border-box;
-  }
-  .patient-page .information-box p {
-    font-size: 12px;
-  }
-  .patient-page .patient-form-card {
-    width: 100%;
-    padding: 25px 18px;
-    border-radius: 13px;
-    box-shadow: none;
-    box-sizing: border-box;
-  }
-  .patient-page .section-title h2 {
-    font-size: 18px;
-  }
-  .patient-page .section-title p {
-    font-size: 13px;
-  }
-  .patient-page .register-options {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .patient-page .birth-wrapper {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .patient-page .select-wrapper,
-  .patient-page .input-wrapper,
-  .patient-page .birth-field {
-    width: 100%;
-  }
-  .patient-page .select-wrapper select,
-  .patient-page .input-wrapper input,
-  .patient-page .birth-field input {
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .patient-page .queue-button {
-    height: 52px;
-    font-size: 14px;
-  }
-}
-
-/* SMALL MOBILE */
-@media (max-width: 420px) {
-  .patient-page .patient-header {
-    padding: 0 14px;
-    gap: 10px;
-  }
-  .patient-page .back-button {
-    width: 34px;
-    height: 34px;
-    font-size: 21px;
-  }
-  .patient-page .patient-logo {
-    font-size: 28px;
-  }
-  .patient-page .patient-main {
-    padding: 28px 14px 45px;
-  }
-  .patient-page .patient-form-card {
-    padding: 22px 15px;
-  }
-  .patient-page .heading-content h1 {
-    font-size: 25px;
-  }
-  .patient-page .heading-content p {
-    font-size: 13px;
-  }
-  .patient-page .information-box {
-    padding: 13px;
-  }
-  .patient-page .information-box p {
-    font-size: 12px;
-  }
+  .dashboard-header { padding: 0 20px; height: auto; flex-wrap: wrap; padding-bottom: 10px; }
+  .header-nav { width: 100%; overflow-x: auto; padding-bottom: 5px; }
+  .patient-page .patient-heading { grid-template-columns: 1fr; gap: 16px; }
+  .patient-page .register-options, .patient-page .birth-wrapper { grid-template-columns: 1fr; }
+  .patient-page .patient-form-card { padding: 24px; }
 }

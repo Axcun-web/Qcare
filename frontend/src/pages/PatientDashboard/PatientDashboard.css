@@ -517,6 +517,65 @@
   color: #9ca3af;
 }
 
+.queue-card.empty-state {
+  border-left: 6px solid #d1d5db; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+}
+
+.no-queue-block {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.no-queue-icon {
+  background-color: #f3f4f6;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.no-queue-block h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.no-queue-block p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  max-width: 250px;
+  line-height: 1.5;
+}
+
+.empty-queue-btn {
+  margin-top: 12px;
+  background-color: #26734d;
+  color: #ffffff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.empty-queue-btn:hover {
+  background-color: #1e5c3e;
+}
+
 /* =========================================
    RESPONSIVE (TABLET)
 ========================================= */
@@ -591,4 +650,5 @@
     flex-wrap: wrap;
     gap: 16px;
   }
+
 }
