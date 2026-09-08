@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
+import DoctorSchedule from "../../components/DoctorSchedule";
 import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
 
@@ -19,7 +20,10 @@ export default function AdminDashboard() {
     [users, setUsers] = useState([]),
     [feedback, setFeedback] = useState([]),
     [editing, setEditing] = useState(null),
+    [selectedClinicId, setSelectedClinicId] = useState(null),
     [detail, setDetail] = useState(null),
+    [memberFilter, setMemberFilter] = useState("ALL"),
+    [scheduleOpenId, setScheduleOpenId] = useState(null),
     [message, setMessage] = useState("");
 
   const handleLogout = () => {
@@ -37,6 +41,7 @@ export default function AdminDashboard() {
     ])
       .then(([c, u, f]) => {
         setClinics(c.data);
+        setSelectedClinicId((current) => current ?? c.data[0]?.id ?? null);
         setUsers(u.data);
         setFeedback(f.data);
       })
@@ -47,10 +52,32 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    if (!selectedClinicId) {
+      setDetail(null);
+      return;
+    }
+    api(`/admin/clinics/${selectedClinicId}`)
+      .then((res) => setDetail(res.data))
+      .catch((err) => setMessage(err.message));
+  }, [selectedClinicId]);
+
+  useEffect(() => {
     if (!message) return undefined;
     const timeout = window.setTimeout(() => setMessage(""), 5000);
     return () => window.clearTimeout(timeout);
   }, [message]);
+
+  const refreshDetail = async () => {
+    if (!selectedClinicId) return;
+    const res = await api(`/admin/clinics/${selectedClinicId}`);
+    setDetail(res.data);
+  };
+
+  const selectClinic = (id) => {
+    setSelectedClinicId(id);
+    setMemberFilter("ALL");
+    setScheduleOpenId(null);
+  };
 
   const submitClinic = async (e) => {
     e.preventDefault();
@@ -64,7 +91,8 @@ export default function AdminDashboard() {
         },
       );
       setEditing(null);
-      load();
+      await load();
+      await refreshDetail();
     } catch (err) {
       setMessage(err.message);
     }
@@ -74,7 +102,8 @@ export default function AdminDashboard() {
     if (!window.confirm("Hapus klinik ini?")) return;
     try {
       await api(`/admin/clinics/${id}`, { method: "DELETE" });
-      load();
+      if (id === selectedClinicId) setSelectedClinicId(null);
+      await load();
     } catch (err) {
       setMessage(err.message);
     }
@@ -82,16 +111,14 @@ export default function AdminDashboard() {
 
   const addMember = async (e, path) => {
     e.preventDefault();
-    const form = e.currentTarget,
-      clinicId = detail.id;
+    const form = e.currentTarget;
     try {
       await api(path, {
         method: "POST",
         body: JSON.stringify(Object.fromEntries(new FormData(form))),
       });
       form.reset();
-      const refreshed = await api(`/admin/clinics/${clinicId}`);
-      setDetail(refreshed.data);
+      await refreshDetail();
       await load();
       setMessage("Data berhasil ditambahkan.");
     } catch (err) {
@@ -103,8 +130,7 @@ export default function AdminDashboard() {
     if (!window.confirm("Hapus dokter ini?")) return;
     try {
       await api(`/admin/doctors/${id}`, { method: "DELETE" });
-      const refreshed = await api(`/admin/clinics/${detail.id}`);
-      setDetail(refreshed.data);
+      await refreshDetail();
       load();
     } catch (err) {
       setMessage(err.message);
@@ -120,9 +146,7 @@ export default function AdminDashboard() {
         method: "PATCH",
         body: JSON.stringify({ nama, spesialisasi }),
       });
-      const refreshed = await api(`/admin/clinics/${detail.id}`);
-      setDetail(refreshed.data);
-      load();
+      await refreshDetail();
     } catch (err) {
       setMessage(err.message);
     }
@@ -132,8 +156,7 @@ export default function AdminDashboard() {
     if (!window.confirm("Hapus petugas ini?")) return;
     try {
       await api(`/admin/users/${id}`, { method: "DELETE" });
-      const refreshed = await api(`/admin/clinics/${detail.id}`);
-      setDetail(refreshed.data);
+      await refreshDetail();
       load();
     } catch (err) {
       setMessage(err.message);
@@ -144,14 +167,11 @@ export default function AdminDashboard() {
     const nama = prompt("Nama petugas:", staff.nama);
     if (!nama) return;
     try {
-      // Existing user update endpoint
       await api(`/admin/users/${staff.id}`, {
         method: "PATCH",
         body: JSON.stringify({ nama }),
       });
-      const refreshed = await api(`/admin/clinics/${detail.id}`);
-      setDetail(refreshed.data);
-      load();
+      await refreshDetail();
     } catch (err) {
       setMessage(err.message);
     }
@@ -173,6 +193,9 @@ export default function AdminDashboard() {
     }
   };
 
+  const showDoctors = memberFilter !== "PETUGAS";
+  const showStaff = memberFilter !== "DOKTER";
+
   return (
     <div className="admin-page">
       <header>
@@ -181,9 +204,6 @@ export default function AdminDashboard() {
           <small>SUPERADMIN CONSOLE</small>
         </div>
         <div>
-          <button className="ghost" onClick={() => navigate("/jadwal-dokter")}>
-            Jadwal Dokter
-          </button>
           {user?.nama}
           <button onClick={handleLogout}>Log Out</button>
         </div>
@@ -212,41 +232,207 @@ export default function AdminDashboard() {
             <div className="admin-action">
               <div>
                 <h2>Daftar klinik</h2>
-                <p>Kelola detail, dokter, dan petugas per klinik.</p>
+                <p>Kelola detail, dokter, jadwal, dan petugas per klinik.</p>
               </div>
               <button onClick={() => setEditing(emptyClinic)}>
                 + Tambah klinik
               </button>
             </div>
-            <div className="clinic-grid">
-              {clinics.map((c) => (
-                <article key={c.id}>
-                  <small>{c.jenisLayanan}</small>
-                  <h3>{c.nama}</h3>
-                  <p>{c.alamat}</p>
-                  <span>◷ {c.jamOperasional}</span>
-                  <div className="counts">
-                    {c._count.doctors} dokter · {c._count.users} petugas
+
+            {clinics.length === 0 ? (
+              <p className="empty-note">Belum ada klinik.</p>
+            ) : (
+              <div className="clinic-layout">
+                <div className="clinic-list">
+                  {clinics.map((c) => (
+                    <button
+                      type="button"
+                      key={c.id}
+                      className={`clinic-row${c.id === selectedClinicId ? " clinic-row--active" : ""}`}
+                      onClick={() => selectClinic(c.id)}
+                    >
+                      <strong>{c.nama}</strong>
+                      <small>{c.jenisLayanan}</small>
+                      <span className="counts">
+                        {c._count.doctors} dokter · {c._count.users} petugas
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {detail && (
+                  <div className="clinic-main">
+                    <div className="clinic-main-header">
+                      <div>
+                        <h2>{detail.nama}</h2>
+                        <p>
+                          {detail.alamat} · ◷ {detail.jamOperasional}
+                        </p>
+                      </div>
+                      <div className="clinic-main-actions">
+                        <button onClick={() => setEditing(detail)}>
+                          Edit klinik
+                        </button>
+                        <button
+                          className="danger"
+                          onClick={() => deleteClinic(detail.id)}
+                        >
+                          Hapus klinik
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="member-filter">
+                      <label htmlFor="member-filter">Tampilkan</label>
+                      <select
+                        id="member-filter"
+                        value={memberFilter}
+                        onChange={(e) => setMemberFilter(e.target.value)}
+                      >
+                        <option value="ALL">Semua</option>
+                        <option value="DOKTER">Dokter</option>
+                        <option value="PETUGAS">Petugas</option>
+                      </select>
+                    </div>
+
+                    <div className="member-list">
+                      {showDoctors &&
+                        detail.doctors.map((x) => (
+                          <div className="member-block" key={`doc-${x.id}`}>
+                            <div className="member">
+                              <div>
+                                {x.nama}
+                                <small>Dokter · {x.spesialisasi}</small>
+                              </div>
+                              <div className="member-actions">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setScheduleOpenId((current) =>
+                                      current === x.id ? null : x.id,
+                                    )
+                                  }
+                                >
+                                  {scheduleOpenId === x.id
+                                    ? "Tutup jadwal"
+                                    : "Kelola jadwal"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => editDoctor(x)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => deleteDoctor(x.id)}
+                                  className="danger"
+                                >
+                                  Hapus
+                                </button>
+                              </div>
+                            </div>
+                            {scheduleOpenId === x.id && (
+                              <DoctorSchedule
+                                doctor={x}
+                                onChange={refreshDetail}
+                                onError={setMessage}
+                              />
+                            )}
+                          </div>
+                        ))}
+
+                      {showStaff &&
+                        detail.users.map((x) => (
+                          <div className="member" key={`staff-${x.id}`}>
+                            <div>
+                              {x.nama}
+                              <small>Petugas · {x.email}</small>
+                            </div>
+                            <div className="member-actions">
+                              <button
+                                type="button"
+                                onClick={() => editStaff(x)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteStaff(x.id)}
+                                className="danger"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                      {showDoctors && detail.doctors.length === 0 && (
+                        <p className="empty-note">Belum ada dokter.</p>
+                      )}
+                      {showStaff &&
+                        !showDoctors &&
+                        detail.users.length === 0 && (
+                          <p className="empty-note">Belum ada petugas.</p>
+                        )}
+                    </div>
+
+                    <div className="add-member-forms">
+                      {showDoctors && (
+                        <form
+                          onSubmit={(e) =>
+                            addMember(e, `/admin/clinics/${detail.id}/doctors`)
+                          }
+                        >
+                          <h4>Tambah dokter</h4>
+                          <input
+                            name="nama"
+                            placeholder="Nama dokter"
+                            required
+                          />
+                          <input
+                            name="spesialisasi"
+                            placeholder="Spesialisasi"
+                            required
+                          />
+                          <button>Tambah dokter</button>
+                        </form>
+                      )}
+
+                      {showStaff && (
+                        <form
+                          onSubmit={(e) =>
+                            addMember(e, `/admin/clinics/${detail.id}/staff`)
+                          }
+                        >
+                          <h4>Tambah petugas</h4>
+                          <input
+                            name="nama"
+                            placeholder="Nama petugas"
+                            required
+                          />
+                          <input
+                            name="email"
+                            type="email"
+                            placeholder="Email"
+                            required
+                          />
+                          <input
+                            name="password"
+                            type="password"
+                            placeholder="Password awal (min. 8)"
+                            minLength="8"
+                            required
+                          />
+                          <input name="noHp" placeholder="Nomor HP" />
+                          <button>Tambah petugas</button>
+                        </form>
+                      )}
+                    </div>
                   </div>
-                  <footer>
-                    <button
-                      onClick={async () => {
-                        setDetail((await api(`/admin/clinics/${c.id}`)).data);
-                      }}
-                    >
-                      Detail
-                    </button>
-                    <button onClick={() => setEditing(c)}>Edit</button>
-                    <button
-                      className="danger"
-                      onClick={() => deleteClinic(c.id)}
-                    >
-                      Hapus
-                    </button>
-                  </footer>
-                </article>
-              ))}
-            </div>
+                )}
+              </div>
+            )}
           </section>
         )}
 
@@ -331,102 +517,6 @@ export default function AdminDashboard() {
               ))}
               <button className="save">Simpan klinik</button>
             </form>
-          </div>
-        )}
-
-        {detail && (
-          <div className="admin-modal">
-            <div className="clinic-detail">
-              <button className="modal-close" onClick={() => setDetail(null)}>
-                ×
-              </button>
-              <p>DETAIL KLINIK</p>
-              <h2>{detail.nama}</h2>
-              <div className="detail-columns">
-                <section>
-                  <h3>Dokter</h3>
-                  {detail.doctors.map((x) => (
-                    <div className="member" key={x.id}>
-                      <div>
-                        {x.nama}
-                        <small>{x.spesialisasi}</small>
-                      </div>
-                      <div className="member-actions">
-                        <button type="button" onClick={() => editDoctor(x)}>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteDoctor(x.id)}
-                          className="danger"
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <form
-                    onSubmit={(e) =>
-                      addMember(e, `/admin/clinics/${detail.id}/doctors`)
-                    }
-                  >
-                    <input name="nama" placeholder="Nama dokter" required />
-                    <input
-                      name="spesialisasi"
-                      placeholder="Spesialisasi"
-                      required
-                    />
-                    <button>Tambah dokter</button>
-                  </form>
-                </section>
-
-                <section>
-                  <h3>Petugas</h3>
-                  {detail.users.map((x) => (
-                    <div className="member" key={x.id}>
-                      <div>
-                        {x.nama}
-                        <small>{x.email}</small>
-                      </div>
-                      <div className="member-actions">
-                        <button type="button" onClick={() => editStaff(x)}>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteStaff(x.id)}
-                          className="danger"
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <form
-                    onSubmit={(e) =>
-                      addMember(e, `/admin/clinics/${detail.id}/staff`)
-                    }
-                  >
-                    <input name="nama" placeholder="Nama petugas" required />
-                    <input
-                      name="email"
-                      type="email"
-                      placeholder="Email"
-                      required
-                    />
-                    <input
-                      name="password"
-                      type="password"
-                      placeholder="Password awal (min. 8)"
-                      minLength="8"
-                      required
-                    />
-                    <input name="noHp" placeholder="Nomor HP" />
-                    <button>Tambah petugas</button>
-                  </form>
-                </section>
-              </div>
-            </div>
           </div>
         )}
 

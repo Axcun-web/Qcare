@@ -93,13 +93,22 @@ export const adminController = {
       select: {
         ...clinicSelect,
         doctors: {
-          select: { id: true, nama: true, spesialisasi: true, isActive: true },
+          select: {
+            id: true,
+            nama: true,
+            spesialisasi: true,
+            isActive: true,
+            jadwalPraktik: true,
+          },
         },
         users: { where: { role: "PETUGAS" }, select: publicUser },
       },
     });
     if (!clinic) throw ApiError.notFound("Klinik tidak ditemukan");
-    res.json({ success: true, data: clinic });
+    res.json({
+      success: true,
+      data: { ...clinic, doctors: clinic.doctors.map(sortJadwal) },
+    });
   }),
 
   createClinic: asyncHandler(async (req, res) => {

@@ -9,7 +9,6 @@ import Appointments from "./pages/Appointments/Appointments";
 import Settings from "./pages/Settings/Settings";
 import PatientDashboard from "./pages/PatientDashboard/PatientDashboard";
 import AdminDashboard from "./pages/AdminDashboard/AdminDashboard";
-import JadwalDokter from "./pages/JadwalDokter/JadwalDokter";
 import Clinics from "./pages/Clinics/Clinics";
 import History from "./pages/History/History";
 import UbahNama from "./pages/ubahNama/ubahNama";
@@ -27,7 +26,6 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/patient" element={<PatientDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/jadwal-dokter" element={<JadwalDokter />} />
         <Route path="/clinics" element={<Clinics />} />
         <Route path="/history" element={<History />} />
         <Route path="/ubah-nama" element={<UbahNama />} />
