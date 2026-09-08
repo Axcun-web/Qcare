@@ -34,6 +34,14 @@
   border-radius: 7px;
   padding: 7px 11px;
 }
+.admin-page header button.ghost {
+  border-color: transparent;
+  color: #b2d1be;
+  margin-left: 0;
+}
+.admin-page header button.ghost:hover {
+  color: #fff;
+}
 .admin-page main {
   max-width: 1160px;
   margin: auto;

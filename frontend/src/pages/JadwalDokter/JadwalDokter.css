@@ -1,0 +1,251 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+.admin-page {
+  min-height: 100vh;
+  background: #f4f8f5;
+  color: #1b4032;
+  font-family: "DM Sans", sans-serif;
+}
+.admin-page header {
+  background: #153f2e;
+  color: #fff;
+  height: 70px;
+  padding: 0 5vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.admin-page header b {
+  font-size: 21px;
+}
+.admin-page header small {
+  font-size: 9px;
+  letter-spacing: 1.3px;
+  color: #b2d1be;
+  margin-left: 12px;
+}
+.admin-page header button {
+  margin-left: 16px;
+  color: #fff;
+  border: 1px solid #5d9277;
+  background: transparent;
+  border-radius: 7px;
+  padding: 7px 11px;
+  cursor: pointer;
+}
+.admin-page header button.ghost {
+  border-color: transparent;
+  color: #b2d1be;
+  margin-left: 0;
+}
+.admin-page header button.ghost:hover {
+  color: #fff;
+}
+.admin-page main {
+  max-width: 1160px;
+  margin: auto;
+  padding: 39px 25px;
+}
+.admin-kicker {
+  font-size: 10px;
+  color: #6d8d7c;
+  letter-spacing: 1.4px;
+  font-weight: 700;
+  margin: 0;
+}
+.admin-page h1 {
+  font-size: 27px;
+  margin: 7px 0 22px;
+}
+.clinic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.clinic-grid article {
+  background: #fff;
+  border: 1px solid #dfebe2;
+  border-radius: 12px;
+  padding: 19px;
+}
+.clinic-grid small {
+  font-size: 10px;
+  color: #478168;
+}
+.clinic-grid h3 {
+  font-size: 16px;
+  margin: 8px 0;
+}
+.clinic-grid p,
+.clinic-grid span {
+  font-size: 11px;
+  color: #70877b;
+  display: block;
+  margin: 5px 0;
+}
+.clinic-grid footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid #e8f0ea;
+}
+.clinic-grid footer button {
+  background: none;
+  border: 0;
+  color: #197c51;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+}
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  background: #153d2b88;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.clinic-detail {
+  position: relative;
+  background: #fff;
+  border-radius: 13px;
+  padding: 27px;
+  width: min(520px, 100%);
+  box-shadow: 0 18px 45px #092b1b55;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.clinic-detail > p {
+  font-size: 10px;
+  color: #6d8d7c;
+  letter-spacing: 1.4px;
+  font-weight: 700;
+  margin: 0;
+}
+.clinic-detail h2 {
+  margin: 6px 0 18px;
+  font-size: 18px;
+}
+.clinic-detail h2 small {
+  color: #70877b;
+  font-weight: 500;
+  font-size: 13px;
+}
+.modal-close {
+  position: absolute;
+  right: 13px;
+  top: 8px;
+  border: 0;
+  background: none;
+  color: #6c887a;
+  font-size: 25px;
+  cursor: pointer;
+}
+.member {
+  border-bottom: 1px solid #edf2ee;
+  padding: 10px 0;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.member small {
+  display: block;
+  color: #7c9286;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.member-actions {
+  display: flex;
+  gap: 8px;
+}
+.member-actions button {
+  background: #187b51;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.member-actions button.danger {
+  background: #b25147;
+}
+.member-actions button:hover {
+  opacity: 0.9;
+}
+.clinic-detail form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #edf2ee;
+}
+.admin-modal label {
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #446653;
+}
+.admin-modal input,
+.admin-modal select {
+  border: 1px solid #d9e7dc;
+  border-radius: 7px;
+  padding: 9px;
+  font-family: inherit;
+  font-size: 12px;
+}
+.clinic-detail form button {
+  grid-column: 1 / -1;
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #187b51;
+  color: #fff;
+  cursor: pointer;
+}
+.clinic-detail form button:hover {
+  background: #12633f;
+}
+.admin-message {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: #174d38;
+  color: #fff;
+  padding: 11px 11px 11px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 22px #183c2d44;
+}
+.admin-message button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 19px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+@media (max-width: 750px) {
+  .clinic-grid {
+    grid-template-columns: 1fr;
+  }
+  .clinic-detail form {
+    grid-template-columns: 1fr;
+  }
+  .admin-page main {
+    padding: 28px 16px;
+  }
+}
