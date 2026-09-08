@@ -1,8 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  --brand: #187b51;
+  --brand-dark: #12633f;
+  --brand-tint: #eaf6ef;
+  --ink: #14291f;
+  --muted: #64796e;
+  --line: #dfebe2;
+  --danger: #b3413a;
+  --danger-tint: #fbeceb;
+}
+
 .admin-page {
   min-height: 100vh;
   background: #f4f8f5;
-  color: #1b4032;
+  color: var(--ink);
   font-family: "DM Sans", sans-serif;
 }
 .admin-page header {
@@ -29,8 +41,16 @@
   border: 1px solid #5d9277;
   background: transparent;
   border-radius: 7px;
-  padding: 7px 11px;
+  padding: 8px 12px;
   cursor: pointer;
+  font-size: 13px;
+}
+.admin-page header button:focus-visible,
+.admin-page button:focus-visible,
+.admin-page input:focus-visible,
+.admin-page a:focus-visible {
+  outline: 2px solid #7fd6ac;
+  outline-offset: 2px;
 }
 .admin-page header button.ghost {
   border-color: transparent;
@@ -43,177 +63,340 @@
 .admin-page main {
   max-width: 1160px;
   margin: auto;
-  padding: 39px 25px;
+  padding: 40px 25px 64px;
 }
 .admin-kicker {
-  font-size: 10px;
-  color: #6d8d7c;
+  font-size: 11px;
+  color: var(--muted);
   letter-spacing: 1.4px;
   font-weight: 700;
   margin: 0;
 }
 .admin-page h1 {
-  font-size: 27px;
-  margin: 7px 0 22px;
+  font-size: 28px;
+  margin: 8px 0 6px;
+  letter-spacing: -0.01em;
 }
-.clinic-grid {
+.page-subtitle {
+  margin: 0 0 28px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* =========================================
+   DOCTOR CARD GRID
+========================================= */
+.doctor-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
 }
-.clinic-grid article {
+.doctor-card {
   background: #fff;
-  border: 1px solid #dfebe2;
-  border-radius: 12px;
-  padding: 19px;
-}
-.clinic-grid small {
-  font-size: 10px;
-  color: #478168;
-}
-.clinic-grid h3 {
-  font-size: 16px;
-  margin: 8px 0;
-}
-.clinic-grid p,
-.clinic-grid span {
-  font-size: 11px;
-  color: #70877b;
-  display: block;
-  margin: 5px 0;
-}
-.clinic-grid footer {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
   display: flex;
-  gap: 8px;
-  margin-top: 15px;
-  padding-top: 12px;
-  border-top: 1px solid #e8f0ea;
+  flex-direction: column;
+  gap: 16px;
 }
-.clinic-grid footer button {
-  background: none;
-  border: 0;
-  color: #197c51;
+.doctor-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.doctor-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--brand-tint);
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.doctor-avatar--lg {
+  width: 52px;
+  height: 52px;
+  font-size: 16px;
+}
+.doctor-card-top h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.doctor-meta {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.week-strip {
+  display: flex;
+  gap: 6px;
+}
+.week-chip {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  color: #9db3a6;
   font-size: 11px;
   font-weight: 700;
-  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.week-chip--active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.manage-btn {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--brand);
+  background: #fff;
+  color: var(--brand);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
 }
+.manage-btn:hover {
+  background: var(--brand-tint);
+}
+
+.empty-note {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* =========================================
+   MODAL / SCHEDULE PANEL
+========================================= */
 .admin-modal {
   position: fixed;
   inset: 0;
-  background: #153d2b88;
+  background: #10281c8f;
   z-index: 10;
   display: grid;
   place-items: center;
   padding: 20px;
 }
-.clinic-detail {
+.schedule-panel {
   position: relative;
   background: #fff;
-  border-radius: 13px;
-  padding: 27px;
-  width: min(520px, 100%);
-  box-shadow: 0 18px 45px #092b1b55;
-  max-height: 90vh;
+  border-radius: 16px;
+  padding: 28px;
+  width: min(600px, 100%);
+  max-height: 88vh;
   overflow-y: auto;
-}
-.clinic-detail > p {
-  font-size: 10px;
-  color: #6d8d7c;
-  letter-spacing: 1.4px;
-  font-weight: 700;
-  margin: 0;
-}
-.clinic-detail h2 {
-  margin: 6px 0 18px;
-  font-size: 18px;
-}
-.clinic-detail h2 small {
-  color: #70877b;
-  font-weight: 500;
-  font-size: 13px;
+  box-shadow: 0 24px 60px #092b1b3d;
 }
 .modal-close {
   position: absolute;
-  right: 13px;
-  top: 8px;
+  right: 14px;
+  top: 12px;
   border: 0;
   background: none;
-  color: #6c887a;
-  font-size: 25px;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
   cursor: pointer;
+  padding: 4px;
 }
-.member {
-  border-bottom: 1px solid #edf2ee;
-  padding: 10px 0;
-  font-size: 12px;
+.panel-kicker {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1.4px;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+.panel-doctor {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
 }
-.member small {
-  display: block;
-  color: #7c9286;
-  font-size: 10px;
-  margin-top: 3px;
+.panel-doctor h2 {
+  margin: 0;
+  font-size: 19px;
 }
-.member-actions {
+
+.day-list {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
-.member-actions button {
-  background: #187b51;
-  color: #fff;
-  border: 0;
-  border-radius: 6px;
-  padding: 6px 10px;
+.day-row {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.day-row--off {
+  background: #fafbfa;
+  border-style: dashed;
+}
+.day-row-label {
+  font-weight: 700;
+  font-size: 13px;
+  width: 70px;
+  flex-shrink: 0;
+}
+.day-row--off .day-row-label {
+  color: var(--muted);
+}
+
+.day-row-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
+}
+.day-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.day-quota {
+  font-size: 12px;
+  background: var(--brand-tint);
+  color: var(--brand-dark);
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+.day-off-label {
+  font-size: 12px;
+  color: #9db3a6;
+  font-style: italic;
+}
+
+.day-row-actions {
+  display: flex;
+  gap: 6px;
+}
+.day-row-actions button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+}
+.day-row-actions button:hover {
+  background: var(--brand-tint);
+}
+.day-row-actions button.danger {
+  color: var(--danger);
+}
+.day-row-actions button.danger:hover {
+  background: var(--danger-tint);
+  border-color: var(--danger-tint);
+}
+
+.day-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px dashed var(--brand);
+  background: none;
+  color: var(--brand);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.day-add-btn:hover {
+  background: var(--brand-tint);
+}
+
+/* =========================================
+   INLINE SLOT FORM (add / edit)
+========================================= */
+.slot-form {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.slot-form-fields {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.slot-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-size: 10px;
   font-weight: 700;
-  cursor: pointer;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.member-actions button.danger {
-  background: #b25147;
-}
-.member-actions button:hover {
-  opacity: 0.9;
-}
-.clinic-detail form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #edf2ee;
-}
-.admin-modal label {
-  display: grid;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #446653;
-}
-.admin-modal input,
-.admin-modal select {
-  border: 1px solid #d9e7dc;
+.slot-form input {
+  border: 1px solid var(--line);
   border-radius: 7px;
-  padding: 9px;
+  padding: 7px 8px;
+  font-size: 13px;
   font-family: inherit;
-  font-size: 12px;
+  width: 92px;
 }
-.clinic-detail form button {
-  grid-column: 1 / -1;
+.slot-form input[type="number"] {
+  width: 64px;
+}
+.slot-form-actions {
+  display: flex;
+  gap: 6px;
+}
+.slot-cancel,
+.slot-save {
   border: 0;
   border-radius: 7px;
-  padding: 10px 12px;
-  font-size: 11px;
+  padding: 8px 12px;
+  font-size: 12px;
   font-weight: 700;
-  background: #187b51;
-  color: #fff;
   cursor: pointer;
 }
-.clinic-detail form button:hover {
-  background: #12633f;
+.slot-cancel {
+  background: #f1f4f2;
+  color: var(--ink);
 }
+.slot-save {
+  background: var(--brand);
+  color: #fff;
+}
+.slot-save:hover {
+  background: var(--brand-dark);
+}
+
+/* =========================================
+   TOAST
+========================================= */
 .admin-message {
   position: fixed;
   right: 20px;
@@ -238,14 +421,25 @@
   padding: 0;
   cursor: pointer;
 }
+
+/* =========================================
+   RESPONSIVE
+========================================= */
 @media (max-width: 750px) {
-  .clinic-grid {
-    grid-template-columns: 1fr;
-  }
-  .clinic-detail form {
+  .doctor-grid {
     grid-template-columns: 1fr;
   }
   .admin-page main {
-    padding: 28px 16px;
+    padding: 28px 16px 48px;
+  }
+  .day-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .day-row-info {
+    justify-content: space-between;
+  }
+  .slot-form {
+    justify-content: flex-start;
   }
 }

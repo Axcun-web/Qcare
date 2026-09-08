@@ -5,15 +5,14 @@ import { api } from "../../lib/api";
 import "./JadwalDokter.css";
 
 const DAYS = [
-  { value: "SENIN", label: "Senin" },
-  { value: "SELASA", label: "Selasa" },
-  { value: "RABU", label: "Rabu" },
-  { value: "KAMIS", label: "Kamis" },
-  { value: "JUMAT", label: "Jumat" },
-  { value: "SABTU", label: "Sabtu" },
-  { value: "MINGGU", label: "Minggu" },
+  { value: "SENIN", label: "Senin", short: "Sen" },
+  { value: "SELASA", label: "Selasa", short: "Sel" },
+  { value: "RABU", label: "Rabu", short: "Rab" },
+  { value: "KAMIS", label: "Kamis", short: "Kam" },
+  { value: "JUMAT", label: "Jumat", short: "Jum" },
+  { value: "SABTU", label: "Sabtu", short: "Sab" },
+  { value: "MINGGU", label: "Minggu", short: "Min" },
 ];
-const DAY_LABEL = Object.fromEntries(DAYS.map((d) => [d.value, d.label]));
 
 const formatTime = (value) =>
   new Date(value).toLocaleTimeString("id-ID", {
@@ -22,12 +21,139 @@ const formatTime = (value) =>
     timeZone: "UTC",
   });
 
+const toHHMM = (value) => {
+  const date = new Date(value);
+  return `${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
+};
+
+const initials = (nama) =>
+  nama
+    .replace(/^dr\.?\s*/i, "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("");
+
+function ClockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M4 7h16" />
+      <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+      <path d="M18 7l-.8 12.1a2 2 0 0 1-2 1.9H8.8a2 2 0 0 1-2-1.9L6 7" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
+function SlotForm({ initial, onCancel, onSubmit }) {
+  return (
+    <form className="slot-form" onSubmit={onSubmit}>
+      <div className="slot-form-fields">
+        <label>
+          Jam mulai
+          <input
+            name="jamMulai"
+            type="time"
+            defaultValue={initial?.jamMulai}
+            required
+          />
+        </label>
+        <label>
+          Jam selesai
+          <input
+            name="jamSelesai"
+            type="time"
+            defaultValue={initial?.jamSelesai}
+            required
+          />
+        </label>
+        <label>
+          Kuota
+          <input
+            name="kuotaAntrean"
+            type="number"
+            min="1"
+            defaultValue={initial?.kuotaAntrean ?? 20}
+            required
+          />
+        </label>
+      </div>
+      <div className="slot-form-actions">
+        <button type="button" className="slot-cancel" onClick={onCancel}>
+          Batal
+        </button>
+        <button type="submit" className="slot-save">
+          Simpan
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export default function JadwalDokter() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [doctors, setDoctors] = useState([]);
   const [detail, setDetail] = useState(null);
   const [message, setMessage] = useState("");
+  const [addingDay, setAddingDay] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   const load = () =>
     api("/admin/doctors")
@@ -55,16 +181,21 @@ export default function JadwalDokter() {
     navigate("/login");
   };
 
-  const addJadwal = async (e, doctorId) => {
+  const closeDetail = () => {
+    setDetail(null);
+    setAddingDay(null);
+    setEditingId(null);
+  };
+
+  const submitAdd = async (e, doctorId, hari) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const data = Object.fromEntries(new FormData(form));
+    const data = Object.fromEntries(new FormData(e.currentTarget));
     try {
       await api(`/admin/doctors/${doctorId}/jadwal`, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ hari, ...data }),
       });
-      form.reset();
+      setAddingDay(null);
       await refreshDetail(doctorId);
       setMessage("Jadwal berhasil ditambahkan.");
     } catch (err) {
@@ -72,27 +203,17 @@ export default function JadwalDokter() {
     }
   };
 
-  const editJadwal = async (doctorId, slot) => {
-    const jamMulai = prompt("Jam mulai (HH:MM):", formatTime(slot.jamMulai));
-    if (!jamMulai) return;
-    const jamSelesai = prompt(
-      "Jam selesai (HH:MM):",
-      formatTime(slot.jamSelesai),
-    );
-    if (!jamSelesai) return;
-    const kuotaAntrean = prompt("Kuota antrean:", slot.kuotaAntrean);
-    if (!kuotaAntrean) return;
+  const submitEdit = async (e, doctorId, slotId, hari) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.currentTarget));
     try {
-      await api(`/admin/jadwal/${slot.id}`, {
+      await api(`/admin/jadwal/${slotId}`, {
         method: "PATCH",
-        body: JSON.stringify({
-          hari: slot.hari,
-          jamMulai,
-          jamSelesai,
-          kuotaAntrean,
-        }),
+        body: JSON.stringify({ hari, ...data }),
       });
+      setEditingId(null);
       await refreshDetail(doctorId);
+      setMessage("Jadwal berhasil diperbarui.");
     } catch (err) {
       setMessage(err.message);
     }
@@ -130,23 +251,54 @@ export default function JadwalDokter() {
       <main>
         <p className="admin-kicker">MANAJEMEN SISTEM</p>
         <h1>Jadwal Praktik Dokter</h1>
+        <p className="page-subtitle">
+          Atur hari dan jam praktik tiap dokter, beserta kuota antrean per sesi.
+        </p>
 
-        <div className="clinic-grid">
-          {doctors.map((doc) => (
-            <article key={doc.id}>
-              <small>{doc.clinic?.nama ?? "Belum ada klinik"}</small>
-              <h3>{doc.nama}</h3>
-              <p>{doc.spesialisasi}</p>
-              <span>{doc.jadwalPraktik.length} hari praktik terjadwal</span>
-              <footer>
-                <button type="button" onClick={() => setDetail(doc)}>
-                  Kelola Jadwal
+        <div className="doctor-grid">
+          {doctors.map((doc) => {
+            const scheduledDays = new Set(doc.jadwalPraktik.map((s) => s.hari));
+            return (
+              <article className="doctor-card" key={doc.id}>
+                <div className="doctor-card-top">
+                  <div className="doctor-avatar">{initials(doc.nama)}</div>
+                  <div>
+                    <h3>{doc.nama}</h3>
+                    <p className="doctor-meta">
+                      {doc.spesialisasi} ·{" "}
+                      {doc.clinic?.nama ?? "Belum ada klinik"}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  className="week-strip"
+                  role="img"
+                  aria-label={`${doc.jadwalPraktik.length} dari 7 hari terjadwal`}
+                >
+                  {DAYS.map((d) => (
+                    <span
+                      key={d.value}
+                      className={`week-chip${scheduledDays.has(d.value) ? " week-chip--active" : ""}`}
+                      title={d.label}
+                    >
+                      {d.short[0]}
+                    </span>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="manage-btn"
+                  onClick={() => setDetail(doc)}
+                >
+                  <ClockIcon /> Kelola Jadwal
                 </button>
-              </footer>
-            </article>
-          ))}
+              </article>
+            );
+          })}
           {doctors.length === 0 && (
-            <p>
+            <p className="empty-note">
               Belum ada dokter. Tambahkan dokter lewat halaman Admin terlebih
               dahulu.
             </p>
@@ -154,81 +306,113 @@ export default function JadwalDokter() {
         </div>
 
         {detail && (
-          <div className="admin-modal">
-            <div className="clinic-detail">
+          <div className="admin-modal" onClick={closeDetail}>
+            <div
+              className="schedule-panel"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 className="modal-close"
                 type="button"
-                onClick={() => setDetail(null)}
+                onClick={closeDetail}
+                aria-label="Tutup"
               >
                 ×
               </button>
-              <p>JADWAL PRAKTIK</p>
-              <h2>
-                {detail.nama} <small>· {detail.spesialisasi}</small>
-              </h2>
-
-              {detail.jadwalPraktik.length === 0 && (
-                <p>Belum ada jadwal untuk dokter ini.</p>
-              )}
-              {detail.jadwalPraktik.map((slot) => (
-                <div className="member" key={slot.id}>
-                  <div>
-                    {DAY_LABEL[slot.hari] ?? slot.hari}
-                    <small>
-                      {formatTime(slot.jamMulai)}–{formatTime(slot.jamSelesai)}{" "}
-                      · Kuota {slot.kuotaAntrean}
-                    </small>
-                  </div>
-                  <div className="member-actions">
-                    <button
-                      type="button"
-                      onClick={() => editJadwal(detail.id, slot)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
-                      onClick={() => deleteJadwal(detail.id, slot.id)}
-                    >
-                      Hapus
-                    </button>
-                  </div>
+              <p className="panel-kicker">JADWAL PRAKTIK MINGGUAN</p>
+              <div className="panel-doctor">
+                <div className="doctor-avatar doctor-avatar--lg">
+                  {initials(detail.nama)}
                 </div>
-              ))}
+                <div>
+                  <h2>{detail.nama}</h2>
+                  <p className="doctor-meta">
+                    {detail.spesialisasi} · {detail.clinic?.nama}
+                  </p>
+                </div>
+              </div>
 
-              <form onSubmit={(e) => addJadwal(e, detail.id)}>
-                <label>
-                  Hari
-                  <select name="hari" defaultValue="SENIN">
-                    {DAYS.map((d) => (
-                      <option key={d.value} value={d.value}>
-                        {d.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Jam mulai
-                  <input name="jamMulai" type="time" required />
-                </label>
-                <label>
-                  Jam selesai
-                  <input name="jamSelesai" type="time" required />
-                </label>
-                <label>
-                  Kuota antrean
-                  <input
-                    name="kuotaAntrean"
-                    type="number"
-                    min="1"
-                    defaultValue="20"
-                    required
-                  />
-                </label>
-                <button type="submit">Tambah jadwal</button>
-              </form>
+              <div className="day-list">
+                {DAYS.map((d) => {
+                  const slot = detail.jadwalPraktik.find(
+                    (s) => s.hari === d.value,
+                  );
+                  const isEditing = slot && editingId === slot.id;
+                  const isAdding = !slot && addingDay === d.value;
+
+                  return (
+                    <div
+                      className={`day-row${slot ? "" : " day-row--off"}`}
+                      key={d.value}
+                    >
+                      <div className="day-row-label">{d.label}</div>
+
+                      {isEditing && (
+                        <SlotForm
+                          initial={{
+                            jamMulai: toHHMM(slot.jamMulai),
+                            jamSelesai: toHHMM(slot.jamSelesai),
+                            kuotaAntrean: slot.kuotaAntrean,
+                          }}
+                          onCancel={() => setEditingId(null)}
+                          onSubmit={(e) =>
+                            submitEdit(e, detail.id, slot.id, d.value)
+                          }
+                        />
+                      )}
+
+                      {isAdding && (
+                        <SlotForm
+                          onCancel={() => setAddingDay(null)}
+                          onSubmit={(e) => submitAdd(e, detail.id, d.value)}
+                        />
+                      )}
+
+                      {!isEditing && !isAdding && slot && (
+                        <div className="day-row-info">
+                          <span className="day-time">
+                            {formatTime(slot.jamMulai)}–
+                            {formatTime(slot.jamSelesai)}
+                          </span>
+                          <span className="day-quota">
+                            Kuota {slot.kuotaAntrean}
+                          </span>
+                          <div className="day-row-actions">
+                            <button
+                              type="button"
+                              aria-label={`Edit jadwal ${d.label}`}
+                              onClick={() => setEditingId(slot.id)}
+                            >
+                              <PencilIcon />
+                            </button>
+                            <button
+                              type="button"
+                              className="danger"
+                              aria-label={`Hapus jadwal ${d.label}`}
+                              onClick={() => deleteJadwal(detail.id, slot.id)}
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {!isEditing && !isAdding && !slot && (
+                        <div className="day-row-info">
+                          <span className="day-off-label">Libur</span>
+                          <button
+                            type="button"
+                            className="day-add-btn"
+                            onClick={() => setAddingDay(d.value)}
+                          >
+                            <PlusIcon /> Tambah
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
