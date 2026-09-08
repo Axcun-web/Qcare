@@ -32,6 +32,7 @@ function App() {
         <Route path="/history" element={<History />} />
         <Route path="/ubah-nama" element={<UbahNama />} />
         <Route path="/ubah-password" element={<UbahPassword />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </AuthProvider>
   );
