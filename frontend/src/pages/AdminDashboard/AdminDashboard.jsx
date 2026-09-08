@@ -315,7 +315,7 @@ export default function AdminDashboard() {
                                 >
                                   {scheduleOpenId === x.id
                                     ? "Tutup jadwal"
-                                    : "Kelola jadwal"}
+                                    : "Lihat jadwal"}
                                 </button>
                                 <button
                                   type="button"
@@ -333,11 +333,7 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             {scheduleOpenId === x.id && (
-                              <DoctorSchedule
-                                doctor={x}
-                                onChange={refreshDetail}
-                                onError={setMessage}
-                              />
+                              <DoctorSchedule doctor={x} />
                             )}
                           </div>
                         ))}
