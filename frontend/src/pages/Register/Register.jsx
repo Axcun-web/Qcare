@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 function Register() {
-  const navigate = useNavigate(); 
-  
+  const navigate = useNavigate();
+
   const [namaLengkap, setNamaLengkap] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,11 +13,11 @@ function Register() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [serverError, setServerError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = async (e) => { 
-    e.preventDefault(); 
-    let isValid = true; 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    let isValid = true;
 
     if (!email.endsWith("@gmail.com")) {
       setEmailError("Gunakan @gmail.com");
@@ -29,8 +29,8 @@ function Register() {
       isValid = false;
     }
 
-    if (password.length < 8){
-      setPasswordError("Password minimal 8 karakter")
+    if (password.length < 8) {
+      setPasswordError("Password minimal 8 karakter");
       isValid = false;
     }
 
@@ -51,7 +51,7 @@ function Register() {
           nama: namaLengkap,
           email: email,
           password: password,
-          konfirmasiPassword: confirmPassword
+          konfirmasiPassword: confirmPassword,
         }),
       });
 
@@ -62,8 +62,7 @@ function Register() {
       }
 
       alert("Registrasi berhasil! Silakan login.");
-      navigate("/"); 
-
+      navigate("/login");
     } catch (error) {
       setServerError(error.message);
     } finally {
@@ -101,7 +100,16 @@ function Register() {
           </p>
 
           {serverError && (
-            <div style={{ color: "red", marginBottom: "15px", fontSize: "14px", backgroundColor: "#ffe6e6", padding: "10px", borderRadius: "5px" }}>
+            <div
+              style={{
+                color: "red",
+                marginBottom: "15px",
+                fontSize: "14px",
+                backgroundColor: "#ffe6e6",
+                padding: "10px",
+                borderRadius: "5px",
+              }}
+            >
               {serverError}
             </div>
           )}
@@ -118,10 +126,22 @@ function Register() {
           </div>
 
           <div className="input-group">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "5px",
+              }}
+            >
               <label style={{ marginBottom: "0" }}>Email</label>
               {emailError && (
-                <span className="email-error-message" style={{ color: "red", fontSize: "12px" }}>*{emailError}</span>
+                <span
+                  className="email-error-message"
+                  style={{ color: "red", fontSize: "12px" }}
+                >
+                  *{emailError}
+                </span>
               )}
             </div>
             <input
@@ -145,10 +165,22 @@ function Register() {
           </div>
 
           <div className="input-group">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "5px",
+              }}
+            >
               <label style={{ marginBottom: "0" }}>Konfirmasi Password</label>
               {passwordError && (
-                <span className="email-error-message" style={{ color: "red", fontSize: "12px" }}>*{passwordError}</span>
+                <span
+                  className="email-error-message"
+                  style={{ color: "red", fontSize: "12px" }}
+                >
+                  *{passwordError}
+                </span>
               )}
             </div>
             <input

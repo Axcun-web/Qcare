@@ -23,14 +23,13 @@ const UbahNama = () => {
   return (
     <div className="ubah-nama-page">
       <div className="ubah-nama-card">
-        
         {/* Top bar khusus untuk Back Button */}
         <div className="ubah-nama-topbar">
           <button
             type="button"
             className="ubah-nama-back"
-            onClick={() => navigate('/settings')}
-            aria-label="Kembali ke Settings"
+            onClick={() => navigate("/settings")}
+            aria-label="Kembali ke Halaman Sebelumnya"
           >
             <span className="back-arrow">←</span>
           </button>

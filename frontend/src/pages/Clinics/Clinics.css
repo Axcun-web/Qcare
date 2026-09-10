@@ -181,19 +181,25 @@
 }
 
 .clinic-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
   padding: 1.5rem;
   background: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clinic-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.12);
 }
 
 .badge {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: #ecfdf5;
+  color: #059669;
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
   font-weight: 600;
@@ -202,49 +208,89 @@
 .clinic-info h2 {
   margin: 0.5rem 0;
   font-size: 1.25rem;
+  color: #111827;
 }
 
 .clinic-info .address {
-  color: #64748b;
+  color: #6b7280;
   margin-bottom: 0.5rem;
+  font-size: 14px;
 }
 
 .clinic-info .hours {
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: #10b981;
 }
 
 .doctor-section {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px dashed #d1fae5;
   padding-top: 1rem;
 }
 
 .doctor-section h3 {
   font-size: 1rem;
   margin-bottom: 1rem;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.doctor-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.doctor-list-modern {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-.doctor-list li {
+.doctor-item {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.doctor-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
 }
 
-.doctor-list li strong {
-  color: #0f172a;
+.doctor-header strong {
+  color: #111827;
+  font-size: 14px;
 }
 
-.doctor-list li span {
-  color: #64748b;
-  font-size: 0.875rem;
+.specialty-badge {
+  background: #e0e7ff;
+  color: #4f46e5;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.doctor-schedules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.schedule-badge {
+  background: #ffffff;
+  border: 1px solid #d1fae5;
+  color: #059669;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.no-schedule {
+  color: #9ca3af;
+  font-size: 12px;
+  font-style: italic;
 }
 
 .directory-message {

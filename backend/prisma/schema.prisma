@@ -49,6 +49,7 @@ model Clinic {
   nama           String   @db.VarChar(150)
   alamat         String   @db.VarChar(255)
   jamOperasional String   @map("jam_operasional") @db.VarChar(100)
+  noTelp         String?  @map("no_telp") @db.VarChar(20)
   jenisLayanan   String   @map("jenis_layanan") @db.VarChar(255)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -109,6 +110,7 @@ model RecordPasien {
   userId       BigInt   @map("user_id")
   nama         String   @db.VarChar(150)
   tanggalLahir DateTime @map("tanggal_lahir") @db.Date
+  tempatLahir  String?  @map("tempat_lahir") @db.VarChar(100)
   jenisKelamin String   @map("jenis_kelamin") @db.VarChar(20)
   hubungan     String   @db.VarChar(50)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz

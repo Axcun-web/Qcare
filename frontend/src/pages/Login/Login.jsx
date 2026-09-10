@@ -70,7 +70,7 @@ function Login() {
 
       login(data.data);
       const role = data.data.user.role;
-      navigate(role === "SUPERADMIN" ? "/admin" : role === "PETUGAS" ? "/staff" : "/patient");
+      navigate(role === "SUPERADMIN" ? "/admin" : role === "PETUGAS" ? "/petugas" : "/patient");
 
     } catch (error) {
       setServerError(error.message);

@@ -1,152 +1,152 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; 
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { api } from "../../lib/api";
+import PatientNavbar from "../../components/PatientNavbar";
 import "./Appointments.css";
 
 const Appointments = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
-  const [hasQueue, setHasQueue] = useState(true); 
-  const [showProfileMenu, setShowProfileMenu] = useState(false); 
+  const [activeQueues, setActiveQueues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleCancelQueue = () => {
-    setHasQueue(false); 
+  useEffect(() => {
+    fetchActiveQueues();
+  }, []);
+
+  const fetchActiveQueues = async () => {
+    try {
+      setLoading(true);
+      const response = await api("/queues/mine");
+      if (response.success) {
+        const allQueues = response.data || [];
+        const active = allQueues.filter((q) =>
+          ["MENUNGGU", "SEDANG_DIPANGGIL", "SEDANG_DILAYANI"].includes(q.status)
+        );
+        
+        active.forEach(q => {
+          const simulatedPeopleAhead = Math.max(0, q.nomorAntrean - 1);
+          q.peopleAhead = simulatedPeopleAhead;
+          q.estimatedWaitTime = simulatedPeopleAhead > 0 ? simulatedPeopleAhead * 15 : 0;
+          q.currentServing = q.nomorAntrean > 1 ? `A-${q.nomorAntrean - simulatedPeopleAhead}` : "-";
+        });
+        
+        // Sort queues so the one with the fewest people ahead (fastest) is at the top
+        active.sort((a, b) => a.peopleAhead - b.peopleAhead);
+        
+        setActiveQueues(active);
+      }
+    } catch (err) {
+      console.error("Failed to load appointments:", err);
+      setError("Gagal memuat data janji temu.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelQueue = async (id) => {
+    const confirmCancel = window.confirm("Apakah Anda yakin ingin membatalkan antrean ini?");
+    if (!confirmCancel) return;
+
+    try {
+      await api(`/queues/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "DIBATALKAN" }),
+      });
+      fetchActiveQueues();
+    } catch (err) {
+      console.error("Failed to cancel queue:", err);
+      alert("Gagal membatalkan antrean.");
+    }
   };
 
   const handleTakeQueue = () => {
-    navigate("/patient-data"); 
+    navigate("/patient-data");
   };
 
   return (
     <div className="dashboard-page">
-      {/* SHARED DASHBOARD HEADER */}
-      <header className="dashboard-header">
-        <Link to="/patient" className="logo">
-          QCare
-        </Link>
-        
-        <nav className="header-nav">
-          <Link to="/patient" className="nav-link">
-            Dashboard
-          </Link>
-          <Link to="/clinics" className="nav-link">
-            Klinik
-          </Link>
-          <Link to="/appointments" className="nav-link active">
-            Janji Temu
-          </Link>
-          <Link to="/history" className="nav-link">
-            Riwayat
-          </Link>
-        </nav>
-
-        <div className="header-right">
-          <div className="profile-wrapper">
-            <div 
-              className="profile-pic" 
-              onClick={() => setShowProfileMenu((prev) => !prev)}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-
-            {showProfileMenu && (
-              <div className="profile-dropdown">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    navigate("/settings");
-                  }}
-                >
-                  <span className="dropdown-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                      <circle cx="12" cy="12" r="3"></circle>
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                  </span>
-                  Settings
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    alert("Notifications");
-                  }}
-                >
-                  <span className="dropdown-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                    </svg>
-                  </span>
-                  Notifications
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <PatientNavbar />
 
       {/* MAIN CONTENT */}
       <main className="dashboard-main">
         <section className="appointments-title-section">
           <div>
-            <h1>Appointment</h1>
+            <h1>Janji Temu</h1>
             <p>Lihat status nomor antrean Anda.</p>
           </div>
         </section>
 
-        {hasQueue ? (
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>Memuat antrean...</div>
+        ) : error ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#dc2626" }}>{error}</div>
+        ) : activeQueues.length > 0 ? (
           <section className="appointment-layout">
-            <div className="queue-card">
-              <div className="queue-card-content">
-                <div className="clinic-badge">+ Klinik Utama Sehat</div>
-                <div className="queue-top">
-                  <div className="doctor-information">
-                    <h2>Dr. Jane Doe</h2>
-                    <p>Umum</p>
-                  </div>
-                  <div className="queue-number">
-                    <span>NOMOR ANTREAN</span>
-                    <strong>A-12</strong>
-                  </div>
-                </div>
+            <div className="active-queues-list">
+              {activeQueues.map((activeQueue) => (
+                <div key={activeQueue.id} className="queue-card" style={{ marginBottom: '24px' }}>
+                  <div className="queue-card-content">
+                    <div className="clinic-badge">+ {activeQueue.clinic?.nama || "Klinik"}</div>
+                    <div className="queue-top">
+                      <div className="doctor-information">
+                        <h2>{activeQueue.doctor?.nama || "Dokter"}</h2>
+                        <p>{activeQueue.doctor?.spesialisasi || "Umum"}</p>
+                      </div>
+                      <div className="queue-number">
+                        <span>NOMOR ANTREAN</span>
+                        <strong>A-{activeQueue.nomorAntrean}</strong>
+                      </div>
+                    </div>
 
-                <div className="waiting-information">
-                  <div className="waiting-left">
-                    <div className="clock-icon"><span></span></div>
-                    <div>
-                      <p>Estimasi Waktu Tunggu</p>
-                      <strong>~15 Menit</strong>
+                    <div className="waiting-information">
+                      <div className="waiting-left">
+                        <div className="clock-icon"><span></span></div>
+                        <div>
+                          <p>Estimasi Waktu Tunggu</p>
+                          <strong>~{activeQueue.estimatedWaitTime} Menit</strong>
+                        </div>
+                      </div>
+                      <div className="current-queue">
+                        <p>Antrean Saat Ini</p>
+                        <strong>{activeQueue.currentServing}</strong>
+                      </div>
+                    </div>
+
+                    <div className="queue-progress-container">
+                      <div className="queue-progress">
+                        <div 
+                          className="queue-progress-fill" 
+                          style={{ width: `${Math.max(10, 100 - (activeQueue.peopleAhead * 20))}%` }}
+                        ></div>
+                      </div>
+                      <p>
+                        {activeQueue.peopleAhead > 0 
+                          ? `${activeQueue.peopleAhead} orang di depan Anda` 
+                          : "Giliran Anda berikutnya!"}
+                      </p>
+                    </div>
+
+                    <div className={`queue-status status-text-${activeQueue.status.toLowerCase()}`}>
+                      <span className={`status-dot ${activeQueue.status.toLowerCase()}`}></span>
+                      {activeQueue.status === "SEDANG_DIPANGGIL" ? "Menuju Ruang Dokter" : 
+                      activeQueue.status === "SEDANG_DILAYANI" ? "Sedang Dilayani" : 
+                      "Menunggu Giliran"}
                     </div>
                   </div>
-                  <div className="current-queue">
-                    <p>Antrean Saat Ini</p>
-                    <strong>A-08</strong>
+
+                  <div className="queue-card-actions">
+                    <button 
+                      className="cancel-btn"
+                      onClick={() => handleCancelQueue(activeQueue.id)}
+                    >
+                      Batalkan Antrean
+                    </button>
                   </div>
                 </div>
-
-                <div className="queue-progress-container">
-                  <div className="queue-progress">
-                    <div className="queue-progress-fill"></div>
-                  </div>
-                  <p>4 orang di depan Anda</p>
-                </div>
-
-                <div className="queue-status">
-                  <span className="status-dot"></span>
-                  Anda sedang dalam antrean
-                </div>
-
-                <button className="cancel-queue-button" onClick={handleCancelQueue}>
-                  Batalkan Nomor Antrean
-                </button>
-              </div>
+              ))}
             </div>
-
             <aside className="appointment-sidebar">
               <div className="clinic-info-box">
                 <div className="info-circle">i</div>
@@ -156,14 +156,6 @@ const Appointments = () => {
                 </div>
               </div>
 
-              <div className="clinic-detail-card">
-                <h3>Detail Klinik</h3>
-                <h4>Klinik Utama Sehat</h4>
-                <p>Layanan: Umum</p>
-                <button className="clinic-detail-button" type="button">
-                  Lihat Detail Klinik
-                </button>
-              </div>
             </aside>
           </section>
         ) : (
@@ -180,7 +172,7 @@ const Appointments = () => {
         )}
       </main>
 
-      {/* SHARED DASHBOARD FOOTER */}
+      {/* FOOTER */}
       <footer className="dashboard-footer">
         <div className="footer-links">
           <strong>QCare</strong>
