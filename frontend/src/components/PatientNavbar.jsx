@@ -71,7 +71,7 @@ export default function PatientNavbar() {
 
         {dropdownOpen && (
           <div className="user-dropdown">
-            <Link to="/settings" onClick={() => setDropdownOpen(false)}>Settings</Link>
+            <Link to="/settings" onClick={() => setDropdownOpen(false)}>Pengaturan</Link>
             <button 
               type="button" 
               onClick={() => {
@@ -79,9 +79,9 @@ export default function PatientNavbar() {
                 alert("Notifications");
               }}
             >
-              Notifications
+              Notifikasi
             </button>
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
+            <button onClick={handleLogout} className="logout-btn">Keluar</button>
           </div>
         )}
       </div>

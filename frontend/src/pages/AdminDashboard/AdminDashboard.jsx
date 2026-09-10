@@ -23,6 +23,8 @@ export default function AdminDashboard() {
     [selectedClinicId, setSelectedClinicId] = useState(null),
     [detail, setDetail] = useState(null),
     [memberFilter, setMemberFilter] = useState("ALL"),
+    [feedbackFilter, setFeedbackFilter] = useState("ALL"),
+    [feedbackPage, setFeedbackPage] = useState(1),
     [scheduleOpenId, setScheduleOpenId] = useState(null),
     [message, setMessage] = useState("");
 
@@ -195,6 +197,16 @@ export default function AdminDashboard() {
 
   const showDoctors = memberFilter !== "PETUGAS";
   const showStaff = memberFilter !== "DOKTER";
+
+  const FEEDBACK_PER_PAGE = 10;
+  const filteredFeedbackList = feedback.filter((f) => 
+    feedbackFilter === "ALL" ? true : f.rating === parseInt(feedbackFilter)
+  );
+  const paginatedFeedback = filteredFeedbackList.slice(
+    (feedbackPage - 1) * FEEDBACK_PER_PAGE,
+    feedbackPage * FEEDBACK_PER_PAGE
+  );
+  const totalFeedbackPages = Math.ceil(filteredFeedbackList.length / FEEDBACK_PER_PAGE) || 1;
 
   return (
     <div className="admin-page">
@@ -443,20 +455,66 @@ export default function AdminDashboard() {
 
         {tab === "feedback" && (
           <section className="management">
-            <h2>Feedback User</h2>
-            {feedback.length ? (
-              feedback.map((item) => (
-                <article className="feedback" key={item.id}>
-                  <b>{item.user.nama}</b>
-                  <span>
-                    {item.rating ? "★".repeat(item.rating) : "Tanpa rating"} ·{" "}
-                    {item.antrean?.clinic?.nama ?? "Kunjungan umum"}
-                  </span>
-                  <p>{item.isi}</p>
-                </article>
-              ))
+            <header style={{ marginBottom: "15px" }}>
+              <h2>Feedback User</h2>
+              <select
+                value={feedbackFilter}
+                onChange={(e) => {
+                  setFeedbackFilter(e.target.value);
+                  setFeedbackPage(1);
+                }}
+              >
+                <option value="ALL">Semua Rating</option>
+                <option value="5">5 Bintang</option>
+                <option value="4">4 Bintang</option>
+                <option value="3">3 Bintang</option>
+                <option value="2">2 Bintang</option>
+                <option value="1">1 Bintang</option>
+              </select>
+            </header>
+
+            {filteredFeedbackList.length ? (
+              <>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Pengguna</th>
+                      <th>Rating</th>
+                      <th>Isi Feedback</th>
+                      <th>Tanggal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedFeedback.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.user?.nama || "Anonim"}</td>
+                        <td style={{ color: "#fbbf24", fontSize: "16px" }}>
+                          {item.rating ? "★".repeat(item.rating) : "-"}
+                        </td>
+                        <td>{item.isi}</td>
+                        <td>{new Date(item.tanggalKirim).toLocaleDateString("id-ID")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="pagination">
+                  <button 
+                    onClick={() => setFeedbackPage(p => Math.max(1, p - 1))}
+                    disabled={feedbackPage === 1}
+                  >
+                    Prev
+                  </button>
+                  <span>Halaman {feedbackPage} dari {totalFeedbackPages}</span>
+                  <button 
+                    onClick={() => setFeedbackPage(p => Math.min(totalFeedbackPages, p + 1))}
+                    disabled={feedbackPage === totalFeedbackPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
             ) : (
-              <p>Belum ada feedback masuk.</p>
+              <p>Belum ada feedback untuk filter ini.</p>
             )}
           </section>
         )}

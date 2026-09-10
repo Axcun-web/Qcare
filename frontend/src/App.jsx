@@ -15,6 +15,8 @@ import UbahNama from "./pages/ubahNama/ubahNama";
 import UbahPassword from "./pages/ubahPassword/ubahPassword";
 import PetugasDashboard from "./pages/PetugasDashboard/PetugasDashboard";
 import ManageClinics from "./pages/ManageClinics/ManageClinics";
+import AboutUs from "./pages/AboutUs/AboutUs";
+import Feedback from "./pages/Feedback/Feedback";
 
 function App() {
   return (
@@ -34,6 +36,8 @@ function App() {
         <Route path="/history" element={<History />} />
         <Route path="/ubah-nama" element={<UbahNama />} />
         <Route path="/ubah-password" element={<UbahPassword />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/feedback" element={<Feedback />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </AuthProvider>

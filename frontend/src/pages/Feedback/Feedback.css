@@ -162,3 +162,24 @@
   line-height: 1.5;
   margin: 0 0 24px 0;
 }
+
+/* STARS RATING */
+.feedback-page .stars {
+  display: flex;
+  gap: 8px;
+  font-size: 32px;
+  cursor: pointer;
+  color: #d1d5db;
+}
+
+.feedback-page .star {
+  transition: color 0.2s, transform 0.2s;
+}
+
+.feedback-page .star.active {
+  color: #fbbf24;
+}
+
+.feedback-page .star:hover {
+  transform: scale(1.1);
+}

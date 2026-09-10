@@ -43,7 +43,7 @@ export default function PetugasNavbar() {
           to="/manage-clinics" 
           className={location.pathname === "/manage-clinics" ? "active" : ""}
         >
-          Manage Clinic
+          Klinik
         </Link>
       </div>
 
@@ -60,8 +60,8 @@ export default function PetugasNavbar() {
 
         {dropdownOpen && (
           <div className="user-dropdown">
-            <Link to="/settings" onClick={() => setDropdownOpen(false)}>Settings</Link>
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
+            <Link to="/settings" onClick={() => setDropdownOpen(false)}>Pengaturan</Link>
+            <button onClick={handleLogout} className="logout-btn">Keluar</button>
           </div>
         )}
       </div>

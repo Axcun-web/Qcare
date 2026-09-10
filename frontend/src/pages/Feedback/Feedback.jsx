@@ -1,16 +1,39 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../lib/api";
 import "./Feedback.css";
 
 const Feedback = () => {
   const navigate = useNavigate();
   const [feedbackText, setFeedbackText] = useState("");
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (feedbackText.trim() === "") return;
-    setIsSubmitted(true);
+    if (feedbackText.trim() === "" || rating === 0) {
+      setErrorMsg("Harap isi rating dan masukan.");
+      return;
+    }
+    
+    setIsLoading(true);
+    setErrorMsg("");
+
+    try {
+      await api("/feedback", {
+        method: "POST",
+        body: JSON.stringify({ isi: feedbackText, rating }),
+      });
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Failed to submit feedback:", error);
+      setErrorMsg(error.message || "Gagal mengirim feedback, silakan coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,6 +59,23 @@ const Feedback = () => {
         {/* FORM / PESAN SUKSES */}
         {!isSubmitted ? (
           <form className="feedback-form" onSubmit={handleSubmit}>
+            <div className="form-group rating-group">
+              <label>Penilaian Anda</label>
+              <div className="stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={`star ${star <= (hoverRating || rating) ? "active" : ""}`}
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+            </div>
+
             <div className="form-group">
               <label htmlFor="feedbackText">Masukan Anda</label>
               <textarea
@@ -45,11 +85,14 @@ const Feedback = () => {
                 value={feedbackText}
                 onChange={(e) => setFeedbackText(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
 
-            <button type="submit" className="btn-submit">
-              Kirim Masukan
+            {errorMsg && <p className="error-message" style={{color: 'red', marginBottom: '1rem'}}>{errorMsg}</p>}
+
+            <button type="submit" className="btn-submit" disabled={isLoading}>
+              {isLoading ? "Mengirim..." : "Kirim Masukan"}
             </button>
           </form>
         ) : (
