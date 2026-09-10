@@ -180,8 +180,9 @@
 }
 
 .plus-icon {
-  font-size: 18px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* =========================================
@@ -517,6 +518,65 @@
   color: #9ca3af;
 }
 
+.queue-card.empty-state {
+  border-left: 6px solid #d1d5db; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+}
+
+.no-queue-block {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.no-queue-icon {
+  background-color: #f3f4f6;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.no-queue-block h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.no-queue-block p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  max-width: 250px;
+  line-height: 1.5;
+}
+
+.empty-queue-btn {
+  margin-top: 12px;
+  background-color: #26734d;
+  color: #ffffff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.empty-queue-btn:hover {
+  background-color: #1e5c3e;
+}
+
 /* =========================================
    RESPONSIVE (TABLET)
 ========================================= */
@@ -591,4 +651,40 @@
     flex-wrap: wrap;
     gap: 16px;
   }
+
 }
+
+/* Cancel Button Styling */
+.btn-cancel-queue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 10px 24px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-cancel-queue:hover {
+  background-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.status-dot.menunggu { background: #f59e0b; }
+.status-dot.sedang_dipanggil { background: #3b82f6; }
+.status-dot.sedang_dilayani { background: #6366f1; }
+.status-dot.selesai { background: #1e7a41; }
+
+.status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.status-MENUNGGU { background: #fff3cd !important; color: #856404 !important; }
+.status-SEDANG_DIPANGGIL { background: #cce5ff !important; color: #004085 !important; }
+.status-SEDANG_DILAYANI { background: #e0e7ff !important; color: #3730a3 !important; }
+.status-SELESAI { background: #eaf7ef !important; color: #1e7a41 !important; }
+.status-DILEWATI { background: #f8d7da !important; color: #721c24 !important; }
+.status-DIBATALKAN { background: #f8d7da !important; color: #721c24 !important; }

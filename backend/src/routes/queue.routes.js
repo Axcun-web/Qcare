@@ -5,6 +5,10 @@ const router = Router();
 router.get("/doctors", queueController.doctors);
 router.post("/", authenticate, authorize("PASIEN"), queueController.create);
 router.get("/mine", authenticate, authorize("PASIEN"), queueController.mine);
+
+router.get("/dashboard", authenticate, authorize("PASIEN"), queueController.dashboard);
+router.get("/patients", authenticate, authorize("PASIEN"), queueController.patients);
+
 router.get("/staff", authenticate, authorize("PETUGAS", "SUPERADMIN"), queueController.staff);
-router.patch("/:id/status", authenticate, authorize("PETUGAS", "SUPERADMIN"), queueController.status);
+router.patch("/:id/status", authenticate, authorize("PASIEN", "PETUGAS", "SUPERADMIN"), queueController.status);
 export const queueRoutes = router;

@@ -201,7 +201,7 @@ export default function AdminDashboard() {
       <header>
         <div>
           <b>QCare</b>
-          <small>SUPERADMIN CONSOLE</small>
+          <small>CONSOLE SUPERADMIN</small>
         </div>
         <div>
           {user?.nama}
@@ -317,19 +317,6 @@ export default function AdminDashboard() {
                                     ? "Tutup jadwal"
                                     : "Lihat jadwal"}
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() => editDoctor(x)}
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => deleteDoctor(x.id)}
-                                  className="danger"
-                                >
-                                  Hapus
-                                </button>
                               </div>
                             </div>
                             {scheduleOpenId === x.id && (
@@ -374,26 +361,6 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="add-member-forms">
-                      {showDoctors && (
-                        <form
-                          onSubmit={(e) =>
-                            addMember(e, `/admin/clinics/${detail.id}/doctors`)
-                          }
-                        >
-                          <h4>Tambah dokter</h4>
-                          <input
-                            name="nama"
-                            placeholder="Nama dokter"
-                            required
-                          />
-                          <input
-                            name="spesialisasi"
-                            placeholder="Spesialisasi"
-                            required
-                          />
-                          <button>Tambah dokter</button>
-                        </form>
-                      )}
 
                       {showStaff && (
                         <form

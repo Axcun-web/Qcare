@@ -1,34 +1,25 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import PatientNavbar from "../../components/PatientNavbar";
+import PetugasNavbar from "../../components/PetugasNavbar";
+import { useAuth } from "../../context/AuthContext";
 import "./Settings.css";
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    navigate("/Login");
+    if (logout) logout();
+    navigate("/login");
   };
+
+  const isPetugas = user?.role === "PETUGAS" || user?.role === "SUPERADMIN";
 
   return (
     <div className="settings-page">
       {/* ================= HEADER ================= */}
-      <header className="settings-header">
-        <div className="settings-logo">QCare</div>
-
-        {/* Profile */}
-        <div className="settings-profile">
-          <svg viewBox="0 0 48 48" className="profile-svg">
-            <circle cx="24" cy="16" r="8" fill="none" stroke="currentColor" strokeWidth="2.5" />
-            <path
-              d="M11 39c0-7.2 5.8-13 13-13s13 5.8 13 13"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-      </header>
+      {isPetugas ? <PetugasNavbar /> : <PatientNavbar />}
 
       {/* ================= MAIN ================= */}
       <main className="settings-main">
@@ -37,7 +28,7 @@ const Settings = () => {
           <button
             type="button"
             className="settings-back"
-            onClick={() => navigate("/patient")}
+            onClick={() => navigate(isPetugas ? "/petugas" : "/patient")}
             aria-label="Kembali ke Dashboard"
           >
             <span className="back-arrow">←</span>

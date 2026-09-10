@@ -17,6 +17,7 @@ const formatTime = (value) =>
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "UTC",
+    hour12: false
   });
 
 const toHHMM = (value) => {
@@ -127,14 +128,29 @@ function SlotForm({ initial, onCancel, onSubmit }) {
  *
  * For a read-only view (Admin-facing), use `DoctorSchedule` instead.
  */
-export default function DoctorScheduleEditor({ doctor, onChange, onError }) {
+export default function DoctorScheduleEditor({ doctor, clinicHours, onChange, onError }) {
   const [addingDay, setAddingDay] = useState(null);
   const [editingId, setEditingId] = useState(null);
+
+  const validateHours = (start, end) => {
+    if (!clinicHours) return true;
+    const parts = clinicHours.split("-");
+    if (parts.length === 2) {
+      const cStart = parts[0].trim();
+      const cEnd = parts[1].trim();
+      if (start < cStart || end > cEnd) {
+        throw new Error(`Jadwal praktik (${start} - ${end}) di luar jam operasional klinik (${clinicHours})`);
+      }
+    }
+    return true;
+  };
 
   const submitAdd = async (e, hari) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
     try {
+      validateHours(data.jamMulai, data.jamSelesai);
+        
       await api(`/admin/doctors/${doctor.id}/jadwal`, {
         method: "POST",
         body: JSON.stringify({ hari, ...data }),
@@ -150,6 +166,8 @@ export default function DoctorScheduleEditor({ doctor, onChange, onError }) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
     try {
+      validateHours(data.jamMulai, data.jamSelesai);
+
       await api(`/admin/jadwal/${slotId}`, {
         method: "PATCH",
         body: JSON.stringify({ hari, ...data }),

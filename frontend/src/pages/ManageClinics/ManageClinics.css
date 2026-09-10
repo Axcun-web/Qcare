@@ -1,0 +1,246 @@
+.manage-clinics-page {
+  min-height: 100vh;
+  background: #f4f8f5;
+  color: #1b4032;
+  font-family: "DM Sans", sans-serif;
+}
+
+.manage-clinics-page main {
+  max-width: 1160px; /* Lebar sudah cukup maksimal, tidak terbagi dua list */
+  margin: auto;
+  padding: 39px 25px;
+}
+
+.admin-kicker {
+  font-size: 10px;
+  color: #6d8d7c;
+  letter-spacing: 1.4px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.manage-clinics-page h1 {
+  font-size: 27px;
+  margin: 7px 0 22px;
+}
+
+.clinic-layout {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.clinic-main {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  border: 1px solid #d6e5d9;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.clinic-main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #d6e5d9;
+}
+
+.clinic-main-header h2 {
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.clinic-main-header p {
+  color: #718b7d;
+  font-size: 14px;
+  margin: 0;
+}
+
+.clinic-main-actions button {
+  background: #187b51;
+  color: #fff;
+  border: 1px solid #187b51;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.clinic-main-actions button:hover {
+  color: #145e3f;
+  background: #145e3f;
+  border-color: #145e3f;
+}
+
+.member-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.member-filter label {
+  font-size: 13px;
+  color: #718b7d;
+  font-weight: 600;
+}
+.member-filter select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d6e5d9;
+  font-family: inherit;
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.member-block {
+  border: 1px solid #d6e5d9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.member {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #fcfdfc;
+}
+.member > div:first-child {
+  font-weight: 600;
+  font-size: 15px;
+}
+.member small {
+  display: block;
+  font-size: 12px;
+  color: #718b7d;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.member-actions {
+  display: flex;
+  gap: 8px;
+}
+.member-actions button {
+  background: #fff;
+  border: 1px solid #d6e5d9;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #1b4032;
+}
+.member-actions button.danger {
+  background: #d9534f;
+  color: #fff;
+  border-color: #d9534f;
+}
+.member-actions button.danger:hover {
+  background: #fff;
+  color: #d9534f;
+  border-color: #d9534f;
+}
+.member-actions button:not(.danger):hover {
+  background: #f4f8f5;
+}
+
+.add-member-forms form {
+  background: #f4f8f5;
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #d6e5d9;
+}
+.add-member-forms h4 {
+  margin: 0 0 16px;
+  font-size: 15px;
+}
+.add-member-forms input {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #d6e5d9;
+  border-radius: 6px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.add-member-forms button {
+  background: #187b51;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+.modal-content h2 {
+  margin: 0 0 20px;
+  font-size: 20px;
+}
+.modal-content label {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.modal-content input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border: 1px solid #d6e5d9;
+  border-radius: 6px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.modal-actions button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #d6e5d9;
+  background: #fff;
+}
+.modal-actions button.primary {
+  background: #187b51;
+  color: #fff;
+  border-color: #187b51;
+}
+
+.empty-note {
+  color: #718b7d;
+  font-style: italic;
+}

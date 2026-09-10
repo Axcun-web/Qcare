@@ -2,7 +2,15 @@ import { Router } from "express";
 import { adminController } from "../controllers/admin.controller.js";
 import { authenticate, authorize } from "../middleware/auth.js";
 const router = Router();
-router.use(authenticate, authorize("SUPERADMIN"));
+router.use(authenticate);
+
+// Allow Petugas to manage schedules
+router.post("/doctors/:id/jadwal", authorize("SUPERADMIN", "PETUGAS"), adminController.createJadwal);
+router.patch("/jadwal/:id", authorize("SUPERADMIN", "PETUGAS"), adminController.updateJadwal);
+router.delete("/jadwal/:id", authorize("SUPERADMIN", "PETUGAS"), adminController.deleteJadwal);
+
+// Restrict all other admin routes to SUPERADMIN only
+router.use(authorize("SUPERADMIN"));
 router.get("/overview", adminController.overview);
 router.get("/clinics", adminController.clinics);
 router.post("/clinics", adminController.createClinic);
@@ -17,8 +25,5 @@ router.get("/feedback", adminController.feedback);
 router.get("/doctors", adminController.doctors);
 router.patch("/doctors/:id", adminController.updateDoctor);
 router.delete("/doctors/:id", adminController.deleteDoctor);
-router.post("/doctors/:id/jadwal", adminController.createJadwal);
-router.patch("/jadwal/:id", adminController.updateJadwal);
-router.delete("/jadwal/:id", adminController.deleteJadwal);
 router.delete("/users/:id", adminController.deleteUser);
 export const adminRoutes = router;

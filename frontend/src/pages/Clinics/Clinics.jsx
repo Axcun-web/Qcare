@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
+import PatientNavbar from "../../components/PatientNavbar";
 import "./Clinics.css";
 
 export default function Clinics() {
@@ -28,76 +29,7 @@ export default function Clinics() {
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <Link to="/patient" className="logo">
-          QCare
-        </Link>
-        
-        <nav className="header-nav">
-          <Link to="/patient" className="nav-link">
-            Dashboard
-          </Link>
-          <Link to="/clinics" className="nav-link active">
-            Klinik
-          </Link>
-          <Link to="/appointments" className="nav-link">
-            Janji Temu
-          </Link>
-          <Link to="/history" className="nav-link">
-            Riwayat
-          </Link>
-        </nav>
-
-        <div className="header-right">
-          <div className="profile-wrapper">
-            <div 
-              className="profile-pic" 
-              onClick={() => setShowProfileMenu((prev) => !prev)}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-
-            {showProfileMenu && (
-              <div className="profile-dropdown">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    navigate("/settings");
-                  }}
-                >
-                  <span className="dropdown-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                      <circle cx="12" cy="12" r="3"></circle>
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                  </span>
-                  Settings
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    alert("Notifications");
-                  }}
-                >
-                  <span className="dropdown-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                    </svg>
-                  </span>
-                  Notifications
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <PatientNavbar />
 
       <main className="dashboard-main">
         <header className="directory-header">
@@ -117,20 +49,46 @@ export default function Clinics() {
                   <small className="badge">{clinic.jenisLayanan}</small>
                   <h2>{clinic.nama}</h2>
                   <p className="address">{clinic.alamat}</p>
-                  <span className="hours">◷ {clinic.jamOperasional}</span>
+                  {clinic.noTelp && (
+                    <p className="contact" style={{ margin: "4px 0", color: "#6b7280", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      {clinic.noTelp}
+                    </p>
+                  )}
+                  <span className="hours">⏱ {clinic.jamOperasional}</span>
                 </div>
                 
                 <div className="doctor-section">
-                  <h3>Tim Dokter</h3>
+                  <h3 style={{ display: 'flex', alignItems: 'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                      <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+                      <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" />
+                      <circle cx="20" cy="10" r="2" />
+                    </svg>
+                    Tim Dokter & Jadwal
+                  </h3>
                   {clinic.doctors && clinic.doctors.length > 0 ? (
-                    <ul className="doctor-list">
+                    <div className="doctor-list-modern">
                       {clinic.doctors.map((doc) => (
-                        <li key={doc.id}>
-                          <strong>{doc.nama}</strong>
-                          <span>{doc.spesialisasi}</span>
-                        </li>
+                        <div key={doc.id} className="doctor-item">
+                          <div className="doctor-header">
+                            <strong>{doc.nama}</strong>
+                            <span className="specialty-badge">{doc.spesialisasi}</span>
+                          </div>
+                          <div className="doctor-schedules">
+                            {doc.jadwalPraktik && doc.jadwalPraktik.length > 0 ? (
+                              doc.jadwalPraktik.map(j => (
+                                <div key={j.id} className="schedule-badge">
+                                  {j.hari.charAt(0).toUpperCase() + j.hari.slice(1).toLowerCase()}: {new Date(j.jamMulai).toLocaleTimeString('id-ID', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' })} - {new Date(j.jamSelesai).toLocaleTimeString('id-ID', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              ))
+                            ) : (
+                              <span className="no-schedule">Belum ada jadwal</span>
+                            )}
+                          </div>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="empty-doctors">Belum ada dokter yang ditugaskan.</p>
                   )}

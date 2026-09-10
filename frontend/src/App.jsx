@@ -13,6 +13,8 @@ import Clinics from "./pages/Clinics/Clinics";
 import History from "./pages/History/History";
 import UbahNama from "./pages/ubahNama/ubahNama";
 import UbahPassword from "./pages/ubahPassword/ubahPassword";
+import PetugasDashboard from "./pages/PetugasDashboard/PetugasDashboard";
+import ManageClinics from "./pages/ManageClinics/ManageClinics";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/patient" element={<PatientDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/manage-clinics" element={<ManageClinics />} />
+        <Route path="/petugas" element={<PetugasDashboard />} />
         <Route path="/clinics" element={<Clinics />} />
         <Route path="/history" element={<History />} />
         <Route path="/ubah-nama" element={<UbahNama />} />

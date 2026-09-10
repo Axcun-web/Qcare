@@ -4,7 +4,11 @@ export const getPublicClinics = async (req, res, next) => {
   try {
     const clinics = await prisma.clinic.findMany({
       include: {
-        doctors: true
+        doctors: {
+          include: {
+            jadwalPraktik: true
+          }
+        }
       }
     });
     

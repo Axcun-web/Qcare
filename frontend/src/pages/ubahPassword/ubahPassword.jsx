@@ -38,8 +38,8 @@ const UbahPassword = () => {
           <button
             type="button"
             className="ubah-password-back"
-            onClick={() => navigate('/settings')}
-            aria-label="Kembali ke Settings"
+            onClick={() => navigate("/settings")}
+            aria-label="Kembali ke Halaman Sebelumnya"
           >
             <span className="back-arrow">←</span>
           </button>

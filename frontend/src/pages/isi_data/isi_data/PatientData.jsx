@@ -1,22 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
-import PatientNavbar from "../../components/PatientNavbar";
-import { useAuth } from "../../context/AuthContext";
 import "./PatientData.css";
 
 const PatientData = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [showProfileMenu, setShowProfileMenu] = useState(false); 
 
   const [registerFor, setRegisterFor] = useState("self");
   const [doctorsList, setDoctorsList] = useState([]);
   const [clinics, setClinics] = useState([]);
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [availableSchedules, setAvailableSchedules] = useState([]);
-  const [savedPatients, setSavedPatients] = useState([]);
-  const [selectedPatientId, setSelectedPatientId] = useState("");
-  const [isAddingNewPerson, setIsAddingNewPerson] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -38,13 +33,9 @@ const PatientData = () => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const [docsRes, patientsRes] = await Promise.all([
-          api("/queues/doctors"),
-          api("/queues/patients")
-        ]);
-
-        if (docsRes.success) {
-          const docs = docsRes.data || [];
+        const res = await api("/queues/doctors");
+        if (res.success) {
+          const docs = res.data || [];
           setDoctorsList(docs);
 
           const uniqueClinicsMap = {};
@@ -55,70 +46,15 @@ const PatientData = () => {
           });
           setClinics(Object.values(uniqueClinicsMap));
         }
-
-        if (patientsRes && patientsRes.success) {
-          setSavedPatients(patientsRes.data || []);
-        }
       } catch (err) {
-        console.error("Failed to load data:", err);
-        setError("Gagal memuat data awal.");
+        console.error("Failed to load doctors/clinics:", err);
+        setError("Gagal memuat data klinik dan dokter.");
       } finally {
         setLoading(false);
       }
     };
     fetchInitialData();
-  }, [user]);
-
-  // Scroll to top when there is an error
-  useEffect(() => {
-    if (error) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [error]);
-
-  const handleSelectPatient = (patient) => {
-    if (!patient) {
-      setFormData(prev => ({
-        ...prev,
-        name: registerFor === "self" ? (user?.nama || "") : "",
-        birthDate: "",
-        birthPlace: "",
-        gender: ""
-      }));
-      return;
-    }
-    
-    // Format date to YYYY-MM-DD for input
-    const d = new Date(patient.tanggalLahir);
-    const dateStr = d.toISOString().split('T')[0];
-
-    setFormData(prev => ({
-      ...prev,
-      name: patient.nama,
-      birthDate: dateStr,
-      birthPlace: patient.tempatLahir || "",
-      gender: patient.jenisKelamin === "Laki-laki" ? "male" : "female"
-    }));
-  };
-
-  useEffect(() => {
-    if (registerFor === "self") {
-      setIsAddingNewPerson(false);
-      const selfPatient = savedPatients.find(p => p.hubungan === "Diri sendiri");
-      if (selfPatient) {
-        setSelectedPatientId(selfPatient.id.toString());
-        handleSelectPatient(selfPatient);
-      } else {
-        setSelectedPatientId("");
-        handleSelectPatient(null);
-      }
-    } else {
-      // Switched to other
-      setSelectedPatientId("");
-      handleSelectPatient(null);
-      setIsAddingNewPerson(false);
-    }
-  }, [registerFor, savedPatients, user]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -126,9 +62,7 @@ const PatientData = () => {
       const updated = { ...prev, [name]: value };
 
       if (name === "clinicId") {
-        const docsForClinic = doctorsList.filter((doc) => 
-          doc.clinic?.id?.toString() === value || doc.clinicId?.toString() === value
-        );
+        const docsForClinic = doctorsList.filter((doc) => doc.clinicId.toString() === value);
         setFilteredDoctors(docsForClinic);
         updated.doctorId = "";
         updated.jadwalId = "";
@@ -155,17 +89,17 @@ const PatientData = () => {
     setError(null);
     try {
       setSubmitting(true);
+      const finalComplaint = formData.complaint === "lainnya" ? formData.otherComplaint : formData.complaint;
       const payload = {
-        clinicId: Number(formData.clinicId),
-        doctorId: Number(formData.doctorId),
-        jadwalId: Number(formData.jadwalId),
-        keluhanUtama: formData.complaint === "lainnya" ? formData.otherComplaint : formData.complaint,
-        registerFor: registerFor,
+        clinicId: formData.clinicId,
+        doctorId: formData.doctorId,
+        jadwalId: formData.jadwalId,
+        complaint: finalComplaint,
+        registerFor,
         name: formData.name,
         birthDate: formData.birthDate,
         birthPlace: formData.birthPlace,
         gender: formData.gender === "male" ? "Laki-laki" : "Perempuan",
-        patientId: selectedPatientId ? Number(selectedPatientId) : undefined,
       };
 
       const response = await api("/queues", {
@@ -187,7 +121,32 @@ const PatientData = () => {
   return (
     <div className="patient-page">
       {/* NAVBAR BARU */}
-      <PatientNavbar />
+      <header className="dashboard-header">
+        <Link to="/patient" className="logo">QCare</Link>
+        <nav className="header-nav">
+          <Link to="/patient" className="nav-link">Dashboard</Link>
+          <Link to="/clinics" className="nav-link">Klinik</Link>
+          <Link to="/appointments" className="nav-link active">Janji Temu</Link>
+          <Link to="/history" className="nav-link">Riwayat</Link>
+        </nav>
+        <div className="header-right">
+          <div className="profile-wrapper">
+            <div className="profile-pic" onClick={() => setShowProfileMenu((prev) => !prev)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            {showProfileMenu && (
+              <div className="profile-dropdown">
+                <button type="button" onClick={() => { setShowProfileMenu(false); navigate("/settings"); }}>
+                  Settings
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
 
       {/* MAIN */}
       <main className="patient-main">
@@ -203,24 +162,7 @@ const PatientData = () => {
           </div>
         </div>
 
-        {error && (
-          <div className="error-alert" style={{ 
-            backgroundColor: '#fef2f2', 
-            color: '#991b1b', 
-            padding: '16px', 
-            borderRadius: '8px', 
-            marginBottom: '24px', 
-            border: '1px solid #f87171',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            {error}
-          </div>
-        )}
+        {error && <div className="error-state" style={{ color: "red", marginBottom: "20px" }}>{error}</div>}
 
         <form className="patient-form-card" onSubmit={handleSubmit}>
           {/* INFORMASI KUNJUNGAN */}
@@ -232,13 +174,11 @@ const PatientData = () => {
           <div className="form-group">
             <label htmlFor="clinicId">Pilih Lokasi Klinik *</label>
             <div className="select-wrapper">
-              <span className="field-icon">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4M9 7h6M9 11h6" /></svg>
-              </span>
+              <span className="field-icon">⌖</span>
               <select id="clinicId" name="clinicId" value={formData.clinicId} onChange={handleChange} required disabled={loading}>
                 <option value="">{loading ? "Memuat data klinik..." : "Pilih lokasi klinik"}</option>
-                {clinics.map((clinic, idx) => (
-                  <option key={clinic.id || `clinic-${idx}`} value={clinic.id}>{clinic.nama} {clinic.alamat ? `- ${clinic.alamat}` : ""}</option>
+                {clinics.map((clinic) => (
+                  <option key={clinic.id} value={clinic.id}>{clinic.nama} - {clinic.alamat}</option>
                 ))}
               </select>
             </div>
@@ -247,13 +187,11 @@ const PatientData = () => {
           <div className="form-group">
             <label htmlFor="doctorId">Pilih Dokter *</label>
             <div className="select-wrapper">
-              <span className="field-icon">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-              </span>
+              <span className="field-icon">♙</span>
               <select id="doctorId" name="doctorId" value={formData.doctorId} onChange={handleChange} required disabled={!formData.clinicId}>
                 <option value="">{formData.clinicId ? "Pilih dokter" : "Pilih klinik terlebih dahulu"}</option>
-                {filteredDoctors.map((doc, idx) => (
-                  <option key={doc.id || `doc-${idx}`} value={doc.id}>{doc.nama} ({doc.spesialisasi})</option>
+                {filteredDoctors.map((doc) => (
+                  <option key={doc.id} value={doc.id}>{doc.nama} ({doc.spesialisasi})</option>
                 ))}
               </select>
             </div>
@@ -263,13 +201,11 @@ const PatientData = () => {
             <div className="form-group">
               <label htmlFor="jadwalId">Jadwal Praktik *</label>
               <div className="select-wrapper">
-                <span className="field-icon">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </span>
+                <span className="field-icon">⏱</span>
                 <select id="jadwalId" name="jadwalId" value={formData.jadwalId} onChange={handleChange} required>
-                  {availableSchedules.map((j, idx) => (
-                    <option key={j.id || `schedule-${idx}`} value={j.id}>
-                      {j.hari.charAt(0).toUpperCase() + j.hari.slice(1).toLowerCase()} ({new Date(j.jamMulai).toLocaleTimeString('id-ID', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' })} - {new Date(j.jamSelesai).toLocaleTimeString('id-ID', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' })})
+                  {availableSchedules.map((j) => (
+                    <option key={j.id} value={j.id}>
+                      {j.hari} ({new Date(j.jamMulai).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(j.jamSelesai).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                     </option>
                   ))}
                 </select>
@@ -280,9 +216,7 @@ const PatientData = () => {
           <div className="form-group">
             <label htmlFor="complaint">Keluhan Utama *</label>
             <div className="select-wrapper">
-              <span className="field-icon">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              </span>
+              <span className="field-icon">▢</span>
               <select id="complaint" name="complaint" value={formData.complaint} onChange={handleChange} required>
                 <option value="">Pilih keluhan utama</option>
                 <option value="Demam">Demam</option>
@@ -293,9 +227,7 @@ const PatientData = () => {
             </div>
             {formData.complaint === "lainnya" && (
               <div className="input-wrapper other-complaint-input">
-                <span className="field-icon">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                </span>
+                <span className="field-icon">✎</span>
                 <input type="text" name="otherComplaint" value={formData.otherComplaint} onChange={handleChange} placeholder="Ketik keluhan Anda di sini..." required />
               </div>
             )}
@@ -330,41 +262,10 @@ const PatientData = () => {
             </div>
           </div>
 
-          {registerFor === "other" && (
-            <div className="form-group">
-              <label>Pilih Data Pasien</label>
-              <div className="select-wrapper">
-                <select 
-                  value={isAddingNewPerson ? "new" : selectedPatientId} 
-                  onChange={(e) => {
-                    if (e.target.value === "new") {
-                      setIsAddingNewPerson(true);
-                      setSelectedPatientId("");
-                      handleSelectPatient(null);
-                    } else {
-                      setIsAddingNewPerson(false);
-                      setSelectedPatientId(e.target.value);
-                      handleSelectPatient(savedPatients.find(p => p.id.toString() === e.target.value));
-                    }
-                  }}
-                  required
-                >
-                  <option value="" disabled>Pilih Pasien yang sudah ada...</option>
-                  {savedPatients.filter(p => p.hubungan !== "Diri sendiri").map(p => (
-                    <option key={p.id} value={p.id}>{p.nama}</option>
-                  ))}
-                  <option value="new">+ Tambah Orang Baru</option>
-                </select>
-              </div>
-            </div>
-          )}
-
           <div className="form-group">
             <label htmlFor="name">Masukkan Nama (sesuai KTP) *</label>
             <div className="input-wrapper">
-              <span className="field-icon">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </span>
+              <span className="field-icon">♙</span>
               <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} placeholder="Masukkan nama lengkap" required />
             </div>
           </div>
@@ -373,15 +274,11 @@ const PatientData = () => {
             <label>Tanggal dan Tempat Lahir *</label>
             <div className="birth-wrapper">
               <div className="birth-field">
-                <span className="field-icon">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                </span>
+                <span className="field-icon">▣</span>
                 <input type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} required />
               </div>
               <div className="birth-field">
-                <span className="field-icon">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                </span>
+                <span className="field-icon">⌖</span>
                 <input type="text" name="birthPlace" value={formData.birthPlace} onChange={handleChange} placeholder="Tempat lahir" required />
               </div>
             </div>
@@ -390,9 +287,7 @@ const PatientData = () => {
           <div className="form-group">
             <label htmlFor="gender">Jenis Kelamin *</label>
             <div className="select-wrapper">
-              <span className="field-icon">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M12 11v11"/><path d="M8 15h8"/><path d="M16 3l5 5"/><path d="M21 3h-5"/><path d="M21 3v5"/></svg>
-              </span>
+              <span className="field-icon">♙</span>
               <select id="gender" name="gender" value={formData.gender} onChange={handleChange} required>
                 <option value="">Pilih jenis kelamin</option>
                 <option value="male">Laki-laki</option>

@@ -197,9 +197,16 @@
   white-space: nowrap;
 }
 .clinic-main-actions button.danger {
-  color: #b25147;
+  background: #d9534f;
+  color: #fff;
+  border-color: #d9534f;
 }
-.clinic-main-actions button:hover {
+.clinic-main-actions button.danger:hover {
+  background: #fff;
+  color: #d9534f;
+  border-color: #d9534f;
+}
+.clinic-main-actions button:not(.danger):hover {
   background: #f6faf7;
 }
 
