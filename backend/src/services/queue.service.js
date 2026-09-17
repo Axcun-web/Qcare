@@ -25,6 +25,20 @@ const wibHour = (date) =>
   new Date(date.getTime() + WIB_OFFSET_MS).getUTCHours();
 // getDay(): 0=Sunday..6=Saturday - matches the DAYS ordering used elsewhere
 // (admin.controller.js, JadwalDokter) for the "hari" free-text column.
+// Notifies every active PETUGAS at a clinic - used for staff-facing events
+// (new booking, patient-initiated cancellation) as opposed to the
+// patient-facing STATUS_MESSAGES notifications above.
+async function notifyClinicStaff(tx, clinicId, pesan, antreanId) {
+  const staff = await tx.user.findMany({
+    where: { clinicId, role: "PETUGAS", isActive: true },
+    select: { id: true },
+  });
+  if (staff.length === 0) return;
+  await tx.notification.createMany({
+    data: staff.map((s) => ({ userId: s.id, antreanId, pesan })),
+  });
+}
+
 const HARI_NAMES = [
   "MINGGU",
   "SENIN",
@@ -98,6 +112,12 @@ async function createAntreanTransaction({
           pesan: `Antrean No. ${entry.nomorAntrean} berhasil didaftarkan.`,
         },
       });
+      await notifyClinicStaff(
+        tx,
+        doctor.clinicId,
+        `Antrean baru No. ${entry.nomorAntrean} untuk ${doctor.nama} telah didaftarkan pasien.`,
+        entry.id,
+      );
     }
     await tx.predictionHistory.create({
       data: {
@@ -292,7 +312,7 @@ export const queueService = {
       where: { id: BigInt(queueId) },
       include: {
         jadwal: { select: { hari: true } },
-        recordPasien: { select: { userId: true } },
+        recordPasien: { select: { userId: true, nama: true } },
       },
     });
     if (!entry) throw ApiError.notFound("Antrean tidak ditemukan");
@@ -357,6 +377,22 @@ export const queueService = {
             pesan: buildMessage(entry.nomorAntrean),
           },
         });
+      }
+
+      // Staff only need to hear about a cancellation when the PATIENT
+      // initiated it - if staff cancelled it themselves there's no one to
+      // notify.
+      if (
+        status === "DIBATALKAN" &&
+        user.role === "PASIEN" &&
+        entry.sumber === "ONLINE"
+      ) {
+        await notifyClinicStaff(
+          tx,
+          entry.clinicId,
+          `Antrean No. ${entry.nomorAntrean} (${entry.recordPasien.nama}) dibatalkan oleh pasien.`,
+          entry.id,
+        );
       }
 
       return updated;

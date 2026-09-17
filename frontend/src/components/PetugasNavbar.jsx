@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 import "./PetugasNavbar.css";
 
 export default function PetugasNavbar() {
@@ -31,25 +32,27 @@ export default function PetugasNavbar() {
         <b>QCare</b>
         <small>CONSOLE PETUGAS</small>
       </Link>
-      
+
       <div className="petugas-navbar-links">
-        <Link 
-          to="/petugas" 
+        <Link
+          to="/petugas"
           className={location.pathname === "/petugas" ? "active" : ""}
         >
           Dashboard
         </Link>
-        <Link 
-          to="/manage-clinics" 
+        <Link
+          to="/manage-clinics"
           className={location.pathname === "/manage-clinics" ? "active" : ""}
         >
           Klinik
         </Link>
       </div>
 
+      <NotificationBell />
+
       <div className="petugas-navbar-user" ref={dropdownRef}>
-        <button 
-          className="user-avatar-btn" 
+        <button
+          className="user-avatar-btn"
           onClick={() => setDropdownOpen(!dropdownOpen)}
         >
           <div className="avatar-circle">
@@ -60,8 +63,12 @@ export default function PetugasNavbar() {
 
         {dropdownOpen && (
           <div className="user-dropdown">
-            <Link to="/settings" onClick={() => setDropdownOpen(false)}>Pengaturan</Link>
-            <button onClick={handleLogout} className="logout-btn">Keluar</button>
+            <Link to="/settings" onClick={() => setDropdownOpen(false)}>
+              Pengaturan
+            </Link>
+            <button onClick={handleLogout} className="logout-btn">
+              Keluar
+            </button>
           </div>
         )}
       </div>

@@ -34,6 +34,10 @@
   border-radius: 7px;
   padding: 7px 11px;
 }
+.admin-header-right {
+  display: flex;
+  align-items: center;
+}
 .admin-page main {
   max-width: 1160px;
   margin: auto;

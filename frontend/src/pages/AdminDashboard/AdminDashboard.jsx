@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
 import DoctorSchedule from "../../components/DoctorSchedule";
+import NotificationBell from "../../components/NotificationBell";
 import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
 
@@ -237,7 +238,8 @@ export default function AdminDashboard() {
           <b>QCare</b>
           <small>CONSOLE SUPERADMIN</small>
         </div>
-        <div>
+        <div className="admin-header-right">
+          <NotificationBell />
           {user?.nama}
           <button onClick={handleLogout}>Log Out</button>
         </div>
