@@ -2,6 +2,7 @@
 
 E-Application antrean poliklinik berbasis prediksi waktu tunggu.
 <!-- Studi kasus: Klinik Ayoda, Alam Sutera, Tangerang Selatan. -->
+<!-- keep -->
 
 Repositori ini merupakan implementasi dari perancangan sistem pada skripsi
 "E-Application Antrean Poliklinik Berbasis Prediksi Waktu Tunggu".
