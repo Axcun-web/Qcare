@@ -1,6 +1,16 @@
 import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 
+const STATUS_MESSAGES = {
+  SEDANG_DIPANGGIL: (nomor) =>
+    `Nomor antrean Anda (No. ${nomor}) sedang dipanggil, silakan menuju ruang dokter.`,
+  SELESAI: (nomor) =>
+    `Pelayanan untuk antrean No. ${nomor} telah selesai. Terima kasih.`,
+  DILEWATI: (nomor) =>
+    `Antrean No. ${nomor} dilewati karena tidak hadir saat dipanggil. Silakan hubungi petugas.`,
+  DIBATALKAN: (nomor) => `Antrean No. ${nomor} telah dibatalkan.`,
+};
+
 const queueInclude = {
   doctor: { select: { id: true, nama: true, spesialisasi: true } },
   clinic: { select: { id: true, nama: true } },
@@ -80,6 +90,15 @@ async function createAntreanTransaction({
       },
       include: queueInclude,
     });
+    if (sumber === "ONLINE") {
+      await tx.notification.create({
+        data: {
+          userId: patient.userId,
+          antreanId: entry.id,
+          pesan: `Antrean No. ${entry.nomorAntrean} berhasil didaftarkan.`,
+        },
+      });
+    }
     await tx.predictionHistory.create({
       data: {
         antreanId: entry.id,
@@ -271,7 +290,10 @@ export const queueService = {
     }
     const entry = await prisma.antrean.findUnique({
       where: { id: BigInt(queueId) },
-      include: { jadwal: { select: { hari: true } } },
+      include: {
+        jadwal: { select: { hari: true } },
+        recordPasien: { select: { userId: true } },
+      },
     });
     if (!entry) throw ApiError.notFound("Antrean tidak ditemukan");
     if (user.role === "PETUGAS") {
@@ -318,6 +340,21 @@ export const queueService = {
             jam: wibHour(mulaiDilayani),
             timestampSelesai,
             durasiPelayanan,
+          },
+        });
+      }
+
+      // Walk-ins have no real account of their own (RecordPasien.userId
+      // points at the staff member who registered them - see createWalkIn),
+      // so notifying "the patient" there would just message the staff about
+      // their own action. Only ONLINE bookings get real notifications.
+      const buildMessage = STATUS_MESSAGES[status];
+      if (buildMessage && entry.sumber === "ONLINE") {
+        await tx.notification.create({
+          data: {
+            userId: entry.recordPasien.userId,
+            antreanId: entry.id,
+            pesan: buildMessage(entry.nomorAntrean),
           },
         });
       }
