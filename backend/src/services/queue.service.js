@@ -13,6 +13,87 @@ const startOfDay = (value = new Date()) =>
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
 const wibHour = (date) =>
   new Date(date.getTime() + WIB_OFFSET_MS).getUTCHours();
+// getDay(): 0=Sunday..6=Saturday - matches the DAYS ordering used elsewhere
+// (admin.controller.js, JadwalDokter) for the "hari" free-text column.
+const HARI_NAMES = [
+  "MINGGU",
+  "SENIN",
+  "SELASA",
+  "RABU",
+  "KAMIS",
+  "JUMAT",
+  "SABTU",
+];
+const hariFromDate = (date) => HARI_NAMES[date.getDay()];
+
+async function validateDoctorSchedule(doctorId, jadwalId) {
+  const [doctor, schedule] = await Promise.all([
+    prisma.doctor.findUnique({ where: { id: doctorId } }),
+    prisma.jadwalPraktikDokter.findUnique({ where: { id: jadwalId } }),
+  ]);
+  if (
+    !doctor ||
+    !doctor.isActive ||
+    !schedule ||
+    schedule.doctorId !== doctorId
+  )
+    throw ApiError.notFound("Dokter atau jadwal tidak ditemukan");
+  return { doctor, schedule };
+}
+
+async function createAntreanTransaction({
+  patient,
+  doctor,
+  schedule,
+  jadwalId,
+  date,
+  sumber,
+}) {
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.antrean.findFirst({
+      where: {
+        recordPasienId: patient.id,
+        status: { in: ["MENUNGGU", "SEDANG_DIPANGGIL", "SEDANG_DILAYANI"] },
+      },
+    });
+    if (existing)
+      throw ApiError.conflict(
+        "Pasien sudah memiliki antrean aktif. Silakan selesaikan atau batalkan terlebih dahulu.",
+      );
+    const countForNumber = await tx.antrean.count({
+      where: { clinicId: doctor.clinicId, tanggal: date },
+    });
+    const countForQuota = await tx.antrean.count({
+      where: { jadwalId, tanggal: date, status: { notIn: ["DIBATALKAN"] } },
+    });
+    if (countForQuota >= schedule.kuotaAntrean)
+      throw ApiError.conflict("Kuota antrean sudah penuh");
+    const entry = await tx.antrean.create({
+      data: {
+        recordPasienId: patient.id,
+        doctorId: doctor.id,
+        clinicId: doctor.clinicId,
+        jadwalId,
+        nomorAntrean: countForNumber + 1,
+        tanggal: date,
+        sumber,
+      },
+      include: queueInclude,
+    });
+    await tx.predictionHistory.create({
+      data: {
+        antreanId: entry.id,
+        doctorId: doctor.id,
+        tanggal: date,
+        estimasiDurasiAntrean: 10,
+        estimasiMenit: countForQuota * 10,
+        sumberEstimasi: "DEFAULT",
+      },
+    });
+    return entry;
+  });
+  return { ...result, estimasiMenit: (result.nomorAntrean - 1) * 10 };
+}
 
 export const queueService = {
   async listDoctors() {
@@ -38,17 +119,10 @@ export const queueService = {
     const doctorId = BigInt(input.doctorId),
       jadwalId = BigInt(input.jadwalId),
       date = startOfDay(input.tanggal ? new Date(input.tanggal) : new Date());
-    const [doctor, schedule] = await Promise.all([
-      prisma.doctor.findUnique({ where: { id: doctorId } }),
-      prisma.jadwalPraktikDokter.findUnique({ where: { id: jadwalId } }),
-    ]);
-    if (
-      !doctor ||
-      !doctor.isActive ||
-      !schedule ||
-      schedule.doctorId !== doctorId
-    )
-      throw ApiError.notFound("Dokter atau jadwal tidak ditemukan");
+    const { doctor, schedule } = await validateDoctorSchedule(
+      doctorId,
+      jadwalId,
+    );
 
     let patient;
     const hubungan =
@@ -81,50 +155,76 @@ export const queueService = {
       });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const existing = await tx.antrean.findFirst({
-        where: {
-          recordPasienId: patient.id,
-          status: { in: ["MENUNGGU", "SEDANG_DIPANGGIL", "SEDANG_DILAYANI"] },
-        },
-      });
-      if (existing)
-        throw ApiError.conflict(
-          "Pasien sudah memiliki antrean aktif. Silakan selesaikan atau batalkan terlebih dahulu.",
-        );
-      const countForNumber = await tx.antrean.count({
-        where: { clinicId: doctor.clinicId, tanggal: date },
-      });
-      const countForQuota = await tx.antrean.count({
-        where: { jadwalId, tanggal: date, status: { notIn: ["DIBATALKAN"] } },
-      });
-      if (countForQuota >= schedule.kuotaAntrean)
-        throw ApiError.conflict("Kuota antrean sudah penuh");
-      const entry = await tx.antrean.create({
-        data: {
-          recordPasienId: patient.id,
-          doctorId,
-          clinicId: doctor.clinicId,
-          jadwalId,
-          nomorAntrean: countForNumber + 1,
-          tanggal: date,
-          sumber: "ONLINE",
-        },
-        include: queueInclude,
-      });
-      await tx.predictionHistory.create({
-        data: {
-          antreanId: entry.id,
-          doctorId,
-          tanggal: date,
-          estimasiDurasiAntrean: 10,
-          estimasiMenit: countForQuota * 10,
-          sumberEstimasi: "DEFAULT",
-        },
-      });
-      return entry;
+    return createAntreanTransaction({
+      patient,
+      doctor,
+      schedule,
+      jadwalId,
+      date,
+      sumber: "ONLINE",
     });
-    return { ...result, estimasiMenit: (result.nomorAntrean - 1) * 10 };
+  },
+
+  /**
+   * Staff-initiated walk-in registration (Tabel ERD `sumber_antrean_enum.WALK_IN`).
+   * A walk-in patient typically has no Qcare account of their own, and
+   * `RecordPasien.userId` is a required FK - so the record is created under
+   * the staff member's own account instead (same shape as the existing
+   * "register for a family member" path in `create()` above), with
+   * `hubungan: "Walk-in"` marking it as staff-entered rather than
+   * self-registered. Does not support reusing an existing RecordPasien -
+   * every walk-in call creates a fresh one.
+   */
+  async createWalkIn(staffUser, input) {
+    const doctorId = BigInt(input.doctorId),
+      jadwalId = BigInt(input.jadwalId),
+      date = startOfDay();
+    const { doctor, schedule } = await validateDoctorSchedule(
+      doctorId,
+      jadwalId,
+    );
+    // A walk-in has no date picker - it's always "right now" - so the chosen
+    // schedule must actually run today, or nomorAntrean/kuota would be
+    // counted against the wrong recurring slot.
+    if (schedule.hari !== hariFromDate(date))
+      throw ApiError.badRequest(
+        "Jadwal yang dipilih tidak berlaku untuk hari ini",
+      );
+
+    if (staffUser.role === "PETUGAS") {
+      const staff = await prisma.user.findUnique({
+        where: { id: BigInt(staffUser.id) },
+        select: { clinicId: true },
+      });
+      if (!staff?.clinicId)
+        throw ApiError.badRequest("Petugas belum dihubungkan ke klinik");
+      if (staff.clinicId !== doctor.clinicId)
+        throw ApiError.forbidden("Dokter bukan bagian dari klinik Anda");
+    }
+
+    const { namaPasien, birthDate, gender, birthPlace } = input;
+    if (!namaPasien || !birthDate || !gender)
+      throw ApiError.badRequest("Data pasien belum lengkap");
+
+    const patient = await prisma.recordPasien.create({
+      data: {
+        userId: BigInt(staffUser.id),
+        nama: namaPasien,
+        tanggalLahir: new Date(birthDate),
+        tempatLahir: birthPlace || null,
+        jenisKelamin: gender,
+        hubungan: "Walk-in",
+      },
+    });
+
+    return createAntreanTransaction({
+      patient,
+      doctor,
+      schedule,
+      jadwalId,
+      date,
+      sumber: "WALK_IN",
+    });
   },
   async mine(userId) {
     const date = startOfDay();

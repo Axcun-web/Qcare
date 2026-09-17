@@ -4,12 +4,45 @@ import { api } from "../../lib/api";
 import "./PetugasDashboard.css";
 import PetugasNavbar from "../../components/PetugasNavbar";
 
+// getDay(): 0=Sunday..6=Saturday - matches backend's hariFromDate in
+// queue.service.js, used to only offer today's schedule for a walk-in.
+const HARI_NAMES = [
+  "MINGGU",
+  "SENIN",
+  "SELASA",
+  "RABU",
+  "KAMIS",
+  "JUMAT",
+  "SABTU",
+];
+const HARI_LABEL = {
+  SENIN: "Senin",
+  SELASA: "Selasa",
+  RABU: "Rabu",
+  KAMIS: "Kamis",
+  JUMAT: "Jumat",
+  SABTU: "Sabtu",
+  MINGGU: "Minggu",
+};
+const formatJamSlot = (value) =>
+  new Date(value).toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  });
+
 export default function PetugasDashboard() {
   const [queues, setQueues] = useState([]);
   const [message, setMessage] = useState("");
+  const [doctors, setDoctors] = useState([]);
+  const [showWalkIn, setShowWalkIn] = useState(false);
+  const [walkInDoctorId, setWalkInDoctorId] = useState("");
 
   // Filters & Pagination
-  const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [filterDate, setFilterDate] = useState(
+    () => new Date().toISOString().split("T")[0],
+  );
   const [searchName, setSearchName] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,6 +62,41 @@ export default function PetugasDashboard() {
     const interval = setInterval(loadQueue, 30000);
     return () => clearInterval(interval);
   }, [filterDate]);
+
+  useEffect(() => {
+    api("/petugas/clinic")
+      .then((res) => setDoctors(res.data.doctors || []))
+      .catch((err) => setMessage(err.message));
+  }, []);
+
+  const submitWalkIn = async (e) => {
+    e.preventDefault();
+    // Capture the form element before the first `await` - React nulls out
+    // `e.currentTarget` once the synchronous part of the handler finishes,
+    // so using it after an await throws (silently swallowed by the catch
+    // below, which made this look like a no-op rather than an error).
+    const form = e.currentTarget;
+    const data = Object.fromEntries(new FormData(form));
+    try {
+      await api("/queues/walk-in", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      form.reset();
+      setShowWalkIn(false);
+      setWalkInDoctorId("");
+      loadQueue();
+      setMessage("Walk-in berhasil didaftarkan.");
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  const todayHari = HARI_NAMES[new Date().getDay()];
+  const walkInDoctor = doctors.find((d) => String(d.id) === walkInDoctorId);
+  const todaySchedules = (walkInDoctor?.jadwalPraktik || []).filter(
+    (j) => j.hari === todayHari,
+  );
 
   useEffect(() => {
     if (!message) return;
@@ -51,12 +119,16 @@ export default function PetugasDashboard() {
 
   // Kalkulasi statistik
   const sisaAntrian = queues.filter((q) => q.status === "MENUNGGU").length;
-  const antrianAktif = queues.find((q) => q.status === "SEDANG_DIPANGGIL" || q.status === "SEDANG_DILAYANI");
+  const antrianAktif = queues.find(
+    (q) => q.status === "SEDANG_DIPANGGIL" || q.status === "SEDANG_DILAYANI",
+  );
   const nomorSaatIni = antrianAktif ? antrianAktif.nomorAntrean : "-";
 
   // Filter Data
-  const filteredQueues = queues.filter(q => {
-    const matchName = q.recordPasien?.nama?.toLowerCase().includes(searchName.toLowerCase());
+  const filteredQueues = queues.filter((q) => {
+    const matchName = q.recordPasien?.nama
+      ?.toLowerCase()
+      .includes(searchName.toLowerCase());
     const matchStatus = statusFilter === "ALL" || q.status === statusFilter;
     return matchName && matchStatus;
   });
@@ -64,7 +136,10 @@ export default function PetugasDashboard() {
   // Pagination Data
   const totalPages = Math.ceil(filteredQueues.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedQueues = filteredQueues.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedQueues = filteredQueues.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   // Reset page when filters change
   useEffect(() => {
@@ -92,26 +167,133 @@ export default function PetugasDashboard() {
         </div>
 
         <div className="petugas-action">
-          <div className="petugas-action-header">
-            <h2>Daftar Antrean</h2>
-            <p>Kelola antrian pasien untuk klinik Anda.</p>
+          <div
+            className="petugas-action-header"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
+            <div>
+              <h2>Daftar Antrean</h2>
+              <p>Kelola antrian pasien untuk klinik Anda.</p>
+            </div>
+            <button
+              type="button"
+              className="btn-panggil"
+              onClick={() => setShowWalkIn((v) => !v)}
+            >
+              {showWalkIn ? "Batal" : "+ Tambah Walk-in"}
+            </button>
           </div>
-          
-          <div className="petugas-filters" style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            <input 
-              type="date" 
+
+          {showWalkIn && (
+            <form className="walk-in-form" onSubmit={submitWalkIn}>
+              <h3>Daftarkan pasien walk-in</h3>
+              <div className="walk-in-fields">
+                <label>
+                  Dokter
+                  <select
+                    name="doctorId"
+                    required
+                    value={walkInDoctorId}
+                    onChange={(e) => setWalkInDoctorId(e.target.value)}
+                  >
+                    <option value="" disabled>
+                      Pilih dokter
+                    </option>
+                    {doctors
+                      .filter((d) => d.isActive)
+                      .map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.nama} · {d.spesialisasi}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label>
+                  Jadwal ({HARI_LABEL[todayHari]}, hari ini)
+                  <select
+                    name="jadwalId"
+                    required
+                    disabled={!walkInDoctorId}
+                    defaultValue=""
+                    key={walkInDoctorId}
+                  >
+                    <option value="" disabled>
+                      {walkInDoctorId
+                        ? todaySchedules.length
+                          ? "Pilih jadwal"
+                          : "Tidak ada jadwal hari ini"
+                        : "Pilih dokter dahulu"}
+                    </option>
+                    {todaySchedules.map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {formatJamSlot(j.jamMulai)}–
+                        {formatJamSlot(j.jamSelesai)} (Kuota {j.kuotaAntrean})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Nama pasien
+                  <input
+                    name="namaPasien"
+                    placeholder="Nama lengkap"
+                    required
+                  />
+                </label>
+                <label>
+                  Tanggal lahir
+                  <input name="birthDate" type="date" required />
+                </label>
+                <label>
+                  Jenis kelamin
+                  <select name="gender" required defaultValue="">
+                    <option value="" disabled>
+                      Pilih jenis kelamin
+                    </option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </label>
+                <label>
+                  Tempat lahir (opsional)
+                  <input name="birthPlace" placeholder="Kota kelahiran" />
+                </label>
+              </div>
+              <button type="submit" className="btn-panggil">
+                Daftarkan antrean
+              </button>
+            </form>
+          )}
+
+          <div
+            className="petugas-filters"
+            style={{
+              display: "flex",
+              gap: "12px",
+              marginBottom: "20px",
+              flexWrap: "wrap",
+            }}
+          >
+            <input
+              type="date"
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
             />
-            <input 
-              type="text" 
-              placeholder="Cari nama pasien..." 
+            <input
+              type="text"
+              placeholder="Cari nama pasien..."
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              style={{ flex: 1, minWidth: '200px' }}
+              style={{ flex: 1, minWidth: "200px" }}
             />
-            <select 
-              value={statusFilter} 
+            <select
+              value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="ALL">Semua Status</option>
@@ -124,7 +306,7 @@ export default function PetugasDashboard() {
             </select>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: "auto" }}>
             <table className="queue-table">
               <thead>
                 <tr>
@@ -138,14 +320,23 @@ export default function PetugasDashboard() {
               <tbody>
                 {paginatedQueues.length === 0 ? (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: "center", padding: "32px", color: "#6b7280" }}>
+                    <td
+                      colSpan="5"
+                      style={{
+                        textAlign: "center",
+                        padding: "32px",
+                        color: "#6b7280",
+                      }}
+                    >
                       Tidak ada antrean yang sesuai.
                     </td>
                   </tr>
                 ) : (
                   paginatedQueues.map((q) => (
                     <tr key={q.id}>
-                      <td><strong>{q.nomorAntrean}</strong></td>
+                      <td>
+                        <strong>{q.nomorAntrean}</strong>
+                      </td>
                       <td>{q.recordPasien?.nama || "-"}</td>
                       <td>{q.doctor?.nama || "-"}</td>
                       <td>
@@ -157,13 +348,15 @@ export default function PetugasDashboard() {
                         <div className="queue-actions">
                           {q.status === "MENUNGGU" && (
                             <>
-                              <button 
+                              <button
                                 className="btn-panggil"
-                                onClick={() => updateStatus(q.id, "SEDANG_DIPANGGIL")}
+                                onClick={() =>
+                                  updateStatus(q.id, "SEDANG_DIPANGGIL")
+                                }
                               >
                                 Panggil
                               </button>
-                              <button 
+                              <button
                                 className="btn-lewati"
                                 onClick={() => updateStatus(q.id, "DILEWATI")}
                               >
@@ -171,15 +364,17 @@ export default function PetugasDashboard() {
                               </button>
                             </>
                           )}
-                          {(q.status === "SEDANG_DIPANGGIL") && (
+                          {q.status === "SEDANG_DIPANGGIL" && (
                             <>
-                              <button 
+                              <button
                                 className="btn-panggil"
-                                onClick={() => updateStatus(q.id, "SEDANG_DILAYANI")}
+                                onClick={() =>
+                                  updateStatus(q.id, "SEDANG_DILAYANI")
+                                }
                               >
                                 Mulai Dilayani
                               </button>
-                              <button 
+                              <button
                                 className="btn-lewati"
                                 onClick={() => updateStatus(q.id, "DILEWATI")}
                               >
@@ -188,7 +383,7 @@ export default function PetugasDashboard() {
                             </>
                           )}
                           {q.status === "SEDANG_DILAYANI" && (
-                            <button 
+                            <button
                               className="btn-selesai"
                               onClick={() => updateStatus(q.id, "SELESAI")}
                             >
@@ -205,19 +400,51 @@ export default function PetugasDashboard() {
           </div>
 
           {totalPages > 1 && (
-            <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
-              <button 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            <div
+              className="pagination"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "16px",
+                marginTop: "24px",
+              }}
+            >
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === 1 ? '#f9fafb' : '#fff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  border: "1px solid #d1d5db",
+                  background: currentPage === 1 ? "#f9fafb" : "#fff",
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                }}
               >
                 Sebelumnya
               </button>
-              <span style={{ fontSize: '14px', color: '#4b5563', fontWeight: '500' }}>Halaman {currentPage} dari {totalPages}</span>
-              <button 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              <span
+                style={{
+                  fontSize: "14px",
+                  color: "#4b5563",
+                  fontWeight: "500",
+                }}
+              >
+                Halaman {currentPage} dari {totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
-                style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === totalPages ? '#f9fafb' : '#fff', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  border: "1px solid #d1d5db",
+                  background: currentPage === totalPages ? "#f9fafb" : "#fff",
+                  cursor:
+                    currentPage === totalPages ? "not-allowed" : "pointer",
+                }}
               >
                 Selanjutnya
               </button>
