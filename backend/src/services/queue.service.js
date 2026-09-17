@@ -14,7 +14,16 @@ const STATUS_MESSAGES = {
 const queueInclude = {
   doctor: { select: { id: true, nama: true, spesialisasi: true } },
   clinic: { select: { id: true, nama: true } },
-  recordPasien: { select: { nama: true } },
+  recordPasien: {
+    select: {
+      nama: true,
+      tanggalLahir: true,
+      jenisKelamin: true,
+      tempatLahir: true,
+      hubungan: true,
+      user: { select: { email: true, noHp: true } },
+    },
+  },
   jadwal: { select: { jamMulai: true, jamSelesai: true } },
 };
 const startOfDay = (value = new Date()) =>

@@ -32,12 +32,23 @@ const formatJamSlot = (value) =>
     timeZone: "UTC",
   });
 
+const formatTanggalLahir = (value) =>
+  value
+    ? new Date(value).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      })
+    : "-";
+
 export default function PetugasDashboard() {
   const [queues, setQueues] = useState([]);
   const [message, setMessage] = useState("");
   const [doctors, setDoctors] = useState([]);
   const [showWalkIn, setShowWalkIn] = useState(false);
   const [walkInDoctorId, setWalkInDoctorId] = useState("");
+  const [detailQueue, setDetailQueue] = useState(null);
 
   // Filters & Pagination
   const [filterDate, setFilterDate] = useState(
@@ -346,6 +357,13 @@ export default function PetugasDashboard() {
                       </td>
                       <td>
                         <div className="queue-actions">
+                          <button
+                            type="button"
+                            className="btn-detail"
+                            onClick={() => setDetailQueue(q)}
+                          >
+                            Detail
+                          </button>
                           {q.status === "MENUNGGU" && (
                             <>
                               <button
@@ -451,6 +469,83 @@ export default function PetugasDashboard() {
             </div>
           )}
         </div>
+
+        {detailQueue && (
+          <div
+            className="patient-modal-backdrop"
+            onClick={() => setDetailQueue(null)}
+          >
+            <div className="patient-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="patient-modal-header">
+                <h3>Detail Pasien</h3>
+                <button
+                  type="button"
+                  className="patient-modal-close"
+                  onClick={() => setDetailQueue(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="patient-modal-body">
+                <div className="patient-modal-row">
+                  <span>Nama</span>
+                  <strong>{detailQueue.recordPasien?.nama || "-"}</strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Tanggal Lahir</span>
+                  <strong>
+                    {formatTanggalLahir(detailQueue.recordPasien?.tanggalLahir)}
+                  </strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Jenis Kelamin</span>
+                  <strong>
+                    {detailQueue.recordPasien?.jenisKelamin || "-"}
+                  </strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Tempat Lahir</span>
+                  <strong>
+                    {detailQueue.recordPasien?.tempatLahir || "-"}
+                  </strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Hubungan</span>
+                  <strong>{detailQueue.recordPasien?.hubungan || "-"}</strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Email Akun</span>
+                  <strong>
+                    {detailQueue.recordPasien?.user?.email || "-"}
+                  </strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>No. HP</span>
+                  <strong>{detailQueue.recordPasien?.user?.noHp || "-"}</strong>
+                </div>
+                <hr />
+                <div className="patient-modal-row">
+                  <span>No. Antrean</span>
+                  <strong>{detailQueue.nomorAntrean}</strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Dokter</span>
+                  <strong>{detailQueue.doctor?.nama || "-"}</strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Status</span>
+                  <strong>{detailQueue.status.replace(/_/g, " ")}</strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Sumber</span>
+                  <strong>
+                    {detailQueue.sumber === "WALK_IN" ? "Walk-in" : "Online"}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

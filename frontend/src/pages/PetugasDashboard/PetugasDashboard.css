@@ -174,11 +174,85 @@
   cursor: pointer;
   font-size: 12px;
 }
+.btn-detail {
+  background: #fff;
+  color: #187b51;
+  border: 1px solid #d6e5d9;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.btn-detail:hover {
+  background: #f4f8f5;
+}
 .btn-panggil:disabled,
 .btn-lewati:disabled,
 .btn-selesai:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.patient-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 63, 46, 0.5);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.patient-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: min(420px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 18px 45px rgba(9, 43, 27, 0.3);
+}
+.patient-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #edf2ee;
+}
+.patient-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1b4032;
+}
+.patient-modal-close {
+  background: none;
+  border: none;
+  color: #6c887a;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+.patient-modal-body {
+  padding: 18px 22px 22px;
+}
+.patient-modal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+}
+.patient-modal-row span {
+  color: #718b7d;
+}
+.patient-modal-row strong {
+  color: #1b4032;
+  text-align: right;
+}
+.patient-modal-body hr {
+  border: none;
+  border-top: 1px solid #edf2ee;
+  margin: 8px 0;
 }
 
 .message {
