@@ -33,7 +33,7 @@ export default function ManageClinics() {
   const submitClinic = async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
-    
+
     if (data.jamBuka && data.jamTutup) {
       data.jamOperasional = `${data.jamBuka} - ${data.jamTutup}`;
       delete data.jamBuka;
@@ -69,12 +69,24 @@ export default function ManageClinics() {
     }
   };
 
-  const deleteDoctor = async (id) => {
-    if (!window.confirm("Hapus dokter ini?")) return;
+  // DELETE /petugas/doctors/:id soft-deletes (isActive: false), so this is a
+  // toggle, not a removal - the row stays in the list either way.
+  const toggleDoctorActive = async (doctor) => {
+    const activating = doctor.isActive === false;
+    if (!activating && !window.confirm("Nonaktifkan dokter ini?")) return;
     try {
-      await api(`/petugas/doctors/${id}`, { method: "DELETE" });
+      if (activating) {
+        await api(`/petugas/doctors/${doctor.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ isActive: true }),
+        });
+      } else {
+        await api(`/petugas/doctors/${doctor.id}`, { method: "DELETE" });
+      }
       await load();
-      setMessage("Dokter berhasil dihapus.");
+      setMessage(
+        activating ? "Dokter berhasil diaktifkan." : "Dokter dinonaktifkan.",
+      );
     } catch (err) {
       setMessage(err.message);
     }
@@ -96,7 +108,6 @@ export default function ManageClinics() {
     }
   };
 
-
   return (
     <div className="manage-clinics-page">
       <PetugasNavbar />
@@ -104,12 +115,17 @@ export default function ManageClinics() {
         <p className="admin-kicker">MANAJEMEN KLINIK</p>
         <h1>Manajemen Klinik & Dokter</h1>
 
-        {message && <p style={{ color: "#187b51", fontWeight: "bold" }}>{message}</p>}
+        {message && (
+          <p style={{ color: "#187b51", fontWeight: "bold" }}>{message}</p>
+        )}
 
         <section>
           {detail ? (
             <div className="clinic-layout">
-              <div className="clinic-main" style={{ marginLeft: 0, width: "100%" }}>
+              <div
+                className="clinic-main"
+                style={{ marginLeft: 0, width: "100%" }}
+              >
                 <div className="clinic-main-header">
                   <div>
                     <h2>{detail.nama}</h2>
@@ -125,49 +141,55 @@ export default function ManageClinics() {
                 </div>
 
                 <div className="member-list">
-                  {
-                    detail.doctors.map((x) => (
-                      <div className="member-block" key={`doc-${x.id}`}>
-                        <div className="member">
-                          <div>
-                            {x.nama}
-                            <small>Dokter · {x.spesialisasi}</small>
-                          </div>
-                          <div className="member-actions">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setScheduleOpenId((current) =>
-                                  current === x.id ? null : x.id,
-                                )
-                              }
-                            >
-                              {scheduleOpenId === x.id
-                                ? "Tutup jadwal"
-                                : "Lihat jadwal"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => editDoctor(x)}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => deleteDoctor(x.id)}
-                              className="danger"
-                            >
-                              Hapus
-                            </button>
-                          </div>
+                  {detail.doctors.map((x) => (
+                    <div className="member-block" key={`doc-${x.id}`}>
+                      <div
+                        className={`member${x.isActive === false ? " member--inactive" : ""}`}
+                      >
+                        <div>
+                          {x.nama}
+                          {x.isActive === false && (
+                            <span className="inactive-badge">Nonaktif</span>
+                          )}
+                          <small>Dokter · {x.spesialisasi}</small>
                         </div>
-                        {scheduleOpenId === x.id && (
-                          <div className="doc-schedule">
-                            <DoctorScheduleEditor doctor={x} clinicHours={detail.jamOperasional} onChange={load} onError={setMessage} />
-                          </div>
-                        )}
+                        <div className="member-actions">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setScheduleOpenId((current) =>
+                                current === x.id ? null : x.id,
+                              )
+                            }
+                          >
+                            {scheduleOpenId === x.id
+                              ? "Tutup jadwal"
+                              : "Lihat jadwal"}
+                          </button>
+                          <button type="button" onClick={() => editDoctor(x)}>
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleDoctorActive(x)}
+                            className={x.isActive === false ? "" : "danger"}
+                          >
+                            {x.isActive === false ? "Aktifkan" : "Nonaktifkan"}
+                          </button>
+                        </div>
                       </div>
-                    ))}
+                      {scheduleOpenId === x.id && (
+                        <div className="doc-schedule">
+                          <DoctorScheduleEditor
+                            doctor={x}
+                            clinicHours={detail.jamOperasional}
+                            onChange={load}
+                            onError={setMessage}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
 
                   {detail.doctors.length === 0 && (
                     <p className="empty-note">Belum ada dokter.</p>
@@ -175,20 +197,16 @@ export default function ManageClinics() {
                 </div>
 
                 <div className="add-member-forms">
-                    <form onSubmit={addDoctor}>
-                      <h4>Tambah dokter</h4>
-                      <input
-                        name="nama"
-                        placeholder="Nama dokter"
-                        required
-                      />
-                      <input
-                        name="spesialisasi"
-                        placeholder="Spesialisasi"
-                        required
-                      />
-                      <button>Tambah dokter</button>
-                    </form>
+                  <form onSubmit={addDoctor}>
+                    <h4>Tambah dokter</h4>
+                    <input name="nama" placeholder="Nama dokter" required />
+                    <input
+                      name="spesialisasi"
+                      placeholder="Spesialisasi"
+                      required
+                    />
+                    <button>Tambah dokter</button>
+                  </form>
                 </div>
               </div>
             </div>
@@ -215,32 +233,42 @@ export default function ManageClinics() {
                   Alamat
                   <input name="alamat" defaultValue={editing.alamat} required />
                 </label>
-                  <label>
-                    No. Telepon
+                <label>
+                  No. Telepon
+                  <input
+                    name="noTelp"
+                    defaultValue={editing.noTelp}
+                    placeholder="081234567890"
+                  />
+                </label>
+                <label>
+                  Jam Operasional
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "center",
+                    }}
+                  >
                     <input
-                      name="noTelp"
-                      defaultValue={editing.noTelp}
-                      placeholder="081234567890"
+                      type="time"
+                      name="jamBuka"
+                      defaultValue={
+                        editing.jamOperasional?.split(" - ")[0]?.trim() || ""
+                      }
+                      required
                     />
-                  </label>
-                  <label>
-                    Jam Operasional
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <input
-                        type="time"
-                        name="jamBuka"
-                        defaultValue={editing.jamOperasional?.split(' - ')[0]?.trim() || ''}
-                        required
-                      />
-                      <span>-</span>
-                      <input
-                        type="time"
-                        name="jamTutup"
-                        defaultValue={editing.jamOperasional?.split(' - ')[1]?.trim() || ''}
-                        required
-                      />
-                    </div>
-                  </label>
+                    <span>-</span>
+                    <input
+                      type="time"
+                      name="jamTutup"
+                      defaultValue={
+                        editing.jamOperasional?.split(" - ")[1]?.trim() || ""
+                      }
+                      required
+                    />
+                  </div>
+                </label>
                 <label>
                   Jenis Layanan
                   <input

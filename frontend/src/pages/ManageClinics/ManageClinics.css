@@ -36,7 +36,7 @@
   border-radius: 12px;
   padding: 30px;
   border: 1px solid #d6e5d9;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
 }
 
 .clinic-main-header {
@@ -124,6 +124,21 @@
   margin-top: 4px;
   font-weight: 400;
 }
+.member--inactive {
+  opacity: 0.55;
+}
+.inactive-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
 
 .member-actions {
   display: flex;
@@ -186,8 +201,11 @@
 
 .modal-backdrop {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;

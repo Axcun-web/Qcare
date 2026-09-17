@@ -128,10 +128,21 @@ export default function AdminDashboard() {
     }
   };
 
-  const deleteDoctor = async (id) => {
-    if (!window.confirm("Hapus dokter ini?")) return;
+  // DELETE /admin/doctors/:id soft-deletes (isActive: false), so this is a
+  // toggle, not a removal - the row stays in the list either way (same
+  // pattern as toggleStaffActive below).
+  const toggleDoctorActive = async (doctor) => {
+    const activating = doctor.isActive === false;
+    if (!activating && !window.confirm("Nonaktifkan dokter ini?")) return;
     try {
-      await api(`/admin/doctors/${id}`, { method: "DELETE" });
+      if (activating) {
+        await api(`/admin/doctors/${doctor.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ isActive: true }),
+        });
+      } else {
+        await api(`/admin/doctors/${doctor.id}`, { method: "DELETE" });
+      }
       await refreshDetail();
       load();
     } catch (err) {
@@ -322,9 +333,16 @@ export default function AdminDashboard() {
                       {showDoctors &&
                         detail.doctors.map((x) => (
                           <div className="member-block" key={`doc-${x.id}`}>
-                            <div className="member">
+                            <div
+                              className={`member${x.isActive === false ? " member--inactive" : ""}`}
+                            >
                               <div>
                                 {x.nama}
+                                {x.isActive === false && (
+                                  <span className="inactive-badge">
+                                    Nonaktif
+                                  </span>
+                                )}
                                 <small>Dokter · {x.spesialisasi}</small>
                               </div>
                               <div className="member-actions">
@@ -339,6 +357,23 @@ export default function AdminDashboard() {
                                   {scheduleOpenId === x.id
                                     ? "Tutup jadwal"
                                     : "Lihat jadwal"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => editDoctor(x)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleDoctorActive(x)}
+                                  className={
+                                    x.isActive === false ? "" : "danger"
+                                  }
+                                >
+                                  {x.isActive === false
+                                    ? "Aktifkan"
+                                    : "Nonaktifkan"}
                                 </button>
                               </div>
                             </div>
