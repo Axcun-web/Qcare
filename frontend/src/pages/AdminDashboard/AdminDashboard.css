@@ -482,6 +482,21 @@
 .member-actions button:hover {
   opacity: 0.9;
 }
+.member--inactive {
+  opacity: 0.55;
+}
+.inactive-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
 
 /* ADMIN TABLE */
 .admin-table {
@@ -548,4 +563,3 @@
   font-size: 12px;
   color: #1b4032;
 }
-

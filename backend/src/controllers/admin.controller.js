@@ -164,22 +164,27 @@ export const adminController = {
   }),
 
   updateDoctor: asyncHandler(async (req, res) => {
-    const { nama, spesialisasi } = req.body;
+    const { nama, spesialisasi, isActive } = req.body;
     res.json({
       success: true,
       data: await prisma.doctor.update({
         where: { id: BigInt(req.params.id) },
-        data: { nama, spesialisasi },
+        data: { nama, spesialisasi, isActive },
       }),
     });
   }),
 
+  // Soft delete: sets isActive: false rather than removing the row. A hard
+  // delete would also need to remove jadwalPraktik first, which fails with a
+  // foreign-key restrict error the moment any of those schedules has queue
+  // history - soft delete sidesteps that entirely and keeps history intact.
   deleteDoctor: asyncHandler(async (req, res) => {
-    await prisma.jadwalPraktikDokter.deleteMany({
-      where: { doctorId: BigInt(req.params.id) },
+    const doctor = await prisma.doctor.update({
+      where: { id: BigInt(req.params.id) },
+      data: { isActive: false },
+      select: { id: true, nama: true, spesialisasi: true, isActive: true },
     });
-    await prisma.doctor.delete({ where: { id: BigInt(req.params.id) } });
-    res.status(204).send();
+    res.json({ success: true, data: doctor });
   }),
 
   doctors: asyncHandler(async (_q, res) => {
@@ -280,9 +285,17 @@ export const adminController = {
     });
   }),
 
+  // Soft delete: sets isActive: false rather than removing the row.
+  // auth.service.js already blocks login for inactive accounts, so this
+  // alone is enough to revoke access without losing history (feedback,
+  // antrean, etc. that reference this user).
   deleteUser: asyncHandler(async (req, res) => {
-    await prisma.user.delete({ where: { id: BigInt(req.params.id) } });
-    res.status(204).send();
+    const user = await prisma.user.update({
+      where: { id: BigInt(req.params.id) },
+      data: { isActive: false },
+      select: publicUser,
+    });
+    res.json({ success: true, data: user });
   }),
 
   feedback: asyncHandler(async (_q, res) =>

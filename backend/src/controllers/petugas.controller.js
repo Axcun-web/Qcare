@@ -25,7 +25,10 @@ export const petugasController = {
       where: { id: req.user.id },
       select: { clinicId: true },
     });
-    if (!user.clinicId) throw ApiError.badRequest("Petugas tidak terhubung dengan klinik manapun");
+    if (!user.clinicId)
+      throw ApiError.badRequest(
+        "Petugas tidak terhubung dengan klinik manapun",
+      );
 
     const clinic = await prisma.clinic.findUnique({
       where: { id: user.clinicId },
@@ -53,7 +56,10 @@ export const petugasController = {
       where: { id: req.user.id },
       select: { clinicId: true },
     });
-    if (!user.clinicId) throw ApiError.badRequest("Petugas tidak terhubung dengan klinik manapun");
+    if (!user.clinicId)
+      throw ApiError.badRequest(
+        "Petugas tidak terhubung dengan klinik manapun",
+      );
 
     const data = {
       nama: req.body.nama,
@@ -74,7 +80,10 @@ export const petugasController = {
       where: { id: req.user.id },
       select: { clinicId: true },
     });
-    if (!user.clinicId) throw ApiError.badRequest("Petugas tidak terhubung dengan klinik manapun");
+    if (!user.clinicId)
+      throw ApiError.badRequest(
+        "Petugas tidak terhubung dengan klinik manapun",
+      );
 
     const doctor = await prisma.doctor.create({
       data: {
@@ -91,34 +100,56 @@ export const petugasController = {
       where: { id: req.user.id },
       select: { clinicId: true },
     });
-    if (!user.clinicId) throw ApiError.badRequest("Petugas tidak terhubung dengan klinik manapun");
+    if (!user.clinicId)
+      throw ApiError.badRequest(
+        "Petugas tidak terhubung dengan klinik manapun",
+      );
 
     // Ensure the doctor belongs to the clinic
-    const doc = await prisma.doctor.findUnique({ where: { id: BigInt(req.params.id) } });
-    if (!doc || doc.clinicId !== user.clinicId) throw ApiError.notFound("Dokter tidak ditemukan");
+    const doc = await prisma.doctor.findUnique({
+      where: { id: BigInt(req.params.id) },
+    });
+    if (!doc || doc.clinicId !== user.clinicId)
+      throw ApiError.notFound("Dokter tidak ditemukan");
 
     const doctor = await prisma.doctor.update({
       where: { id: doc.id },
       data: {
         nama: req.body.nama !== undefined ? req.body.nama : doc.nama,
-        spesialisasi: req.body.spesialisasi !== undefined ? req.body.spesialisasi : doc.spesialisasi,
-        isActive: req.body.isActive !== undefined ? req.body.isActive : doc.isActive,
+        spesialisasi:
+          req.body.spesialisasi !== undefined
+            ? req.body.spesialisasi
+            : doc.spesialisasi,
+        isActive:
+          req.body.isActive !== undefined ? req.body.isActive : doc.isActive,
       },
     });
     res.json({ success: true, data: doctor });
   }),
 
+  // Soft delete: sets isActive: false rather than removing the row (same
+  // reasoning as admin.controller.js's deleteDoctor - a hard delete would
+  // fail on any doctor whose schedules already have queue history).
   deleteDoctor: asyncHandler(async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { clinicId: true },
     });
-    if (!user.clinicId) throw ApiError.badRequest("Petugas tidak terhubung dengan klinik manapun");
+    if (!user.clinicId)
+      throw ApiError.badRequest(
+        "Petugas tidak terhubung dengan klinik manapun",
+      );
 
-    const doc = await prisma.doctor.findUnique({ where: { id: BigInt(req.params.id) } });
-    if (!doc || doc.clinicId !== user.clinicId) throw ApiError.notFound("Dokter tidak ditemukan");
+    const doc = await prisma.doctor.findUnique({
+      where: { id: BigInt(req.params.id) },
+    });
+    if (!doc || doc.clinicId !== user.clinicId)
+      throw ApiError.notFound("Dokter tidak ditemukan");
 
-    await prisma.doctor.delete({ where: { id: doc.id } });
-    res.json({ success: true, data: null });
+    const doctor = await prisma.doctor.update({
+      where: { id: doc.id },
+      data: { isActive: false },
+    });
+    res.json({ success: true, data: doctor });
   }),
 };

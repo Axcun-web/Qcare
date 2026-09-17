@@ -154,10 +154,20 @@ export default function AdminDashboard() {
     }
   };
 
-  const deleteStaff = async (id) => {
-    if (!window.confirm("Hapus petugas ini?")) return;
+  // DELETE /admin/users/:id soft-deletes (isActive: false), so this is a
+  // toggle, not a removal - the row stays in the list either way.
+  const toggleStaffActive = async (staff) => {
+    const activating = staff.isActive === false;
+    if (!activating && !window.confirm("Nonaktifkan petugas ini?")) return;
     try {
-      await api(`/admin/users/${id}`, { method: "DELETE" });
+      if (activating) {
+        await api(`/admin/users/${staff.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ isActive: true }),
+        });
+      } else {
+        await api(`/admin/users/${staff.id}`, { method: "DELETE" });
+      }
       await refreshDetail();
       load();
     } catch (err) {
@@ -199,14 +209,15 @@ export default function AdminDashboard() {
   const showStaff = memberFilter !== "DOKTER";
 
   const FEEDBACK_PER_PAGE = 10;
-  const filteredFeedbackList = feedback.filter((f) => 
-    feedbackFilter === "ALL" ? true : f.rating === parseInt(feedbackFilter)
+  const filteredFeedbackList = feedback.filter((f) =>
+    feedbackFilter === "ALL" ? true : f.rating === parseInt(feedbackFilter),
   );
   const paginatedFeedback = filteredFeedbackList.slice(
     (feedbackPage - 1) * FEEDBACK_PER_PAGE,
-    feedbackPage * FEEDBACK_PER_PAGE
+    feedbackPage * FEEDBACK_PER_PAGE,
   );
-  const totalFeedbackPages = Math.ceil(filteredFeedbackList.length / FEEDBACK_PER_PAGE) || 1;
+  const totalFeedbackPages =
+    Math.ceil(filteredFeedbackList.length / FEEDBACK_PER_PAGE) || 1;
 
   return (
     <div className="admin-page">
@@ -339,9 +350,15 @@ export default function AdminDashboard() {
 
                       {showStaff &&
                         detail.users.map((x) => (
-                          <div className="member" key={`staff-${x.id}`}>
+                          <div
+                            className={`member${x.isActive === false ? " member--inactive" : ""}`}
+                            key={`staff-${x.id}`}
+                          >
                             <div>
                               {x.nama}
+                              {x.isActive === false && (
+                                <span className="inactive-badge">Nonaktif</span>
+                              )}
                               <small>Petugas · {x.email}</small>
                             </div>
                             <div className="member-actions">
@@ -353,10 +370,12 @@ export default function AdminDashboard() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => deleteStaff(x.id)}
-                                className="danger"
+                                onClick={() => toggleStaffActive(x)}
+                                className={x.isActive === false ? "" : "danger"}
                               >
-                                Hapus
+                                {x.isActive === false
+                                  ? "Aktifkan"
+                                  : "Nonaktifkan"}
                               </button>
                             </div>
                           </div>
@@ -373,7 +392,6 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="add-member-forms">
-
                       {showStaff && (
                         <form
                           onSubmit={(e) =>
@@ -492,21 +510,31 @@ export default function AdminDashboard() {
                           {item.rating ? "★".repeat(item.rating) : "-"}
                         </td>
                         <td>{item.isi}</td>
-                        <td>{new Date(item.tanggalKirim).toLocaleDateString("id-ID")}</td>
+                        <td>
+                          {new Date(item.tanggalKirim).toLocaleDateString(
+                            "id-ID",
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className="pagination">
-                  <button 
-                    onClick={() => setFeedbackPage(p => Math.max(1, p - 1))}
+                  <button
+                    onClick={() => setFeedbackPage((p) => Math.max(1, p - 1))}
                     disabled={feedbackPage === 1}
                   >
                     Prev
                   </button>
-                  <span>Halaman {feedbackPage} dari {totalFeedbackPages}</span>
-                  <button 
-                    onClick={() => setFeedbackPage(p => Math.min(totalFeedbackPages, p + 1))}
+                  <span>
+                    Halaman {feedbackPage} dari {totalFeedbackPages}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setFeedbackPage((p) =>
+                        Math.min(totalFeedbackPages, p + 1),
+                      )
+                    }
                     disabled={feedbackPage === totalFeedbackPages}
                   >
                     Next
