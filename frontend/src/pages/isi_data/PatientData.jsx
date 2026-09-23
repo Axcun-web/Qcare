@@ -12,6 +12,7 @@ const PatientData = () => {
   const [registerFor, setRegisterFor] = useState("self");
   const [doctorsList, setDoctorsList] = useState([]);
   const [clinics, setClinics] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [availableSchedules, setAvailableSchedules] = useState([]);
   const [savedPatients, setSavedPatients] = useState([]);
@@ -24,6 +25,7 @@ const PatientData = () => {
 
   const [formData, setFormData] = useState({
     clinicId: "",
+    category: "",
     doctorId: "",
     jadwalId: "",
     complaint: "",
@@ -129,7 +131,27 @@ const PatientData = () => {
         const docsForClinic = doctorsList.filter((doc) => 
           doc.clinic?.id?.toString() === value || doc.clinicId?.toString() === value
         );
-        setFilteredDoctors(docsForClinic);
+        
+        // Ambil daftar spesialisasi/kategori dokter yang unik di klinik ini
+        const categories = Array.from(
+          new Set(docsForClinic.map((doc) => doc.spesialisasi).filter(Boolean))
+        );
+        setAvailableCategories(categories);
+
+        setFilteredDoctors([]);
+        updated.category = "";
+        updated.doctorId = "";
+        updated.jadwalId = "";
+        setAvailableSchedules([]);
+      }
+
+      if (name === "category") {
+        const docsForClinicAndCategory = doctorsList.filter(
+          (doc) =>
+            (doc.clinic?.id?.toString() === prev.clinicId || doc.clinicId?.toString() === prev.clinicId) &&
+            doc.spesialisasi === value
+        );
+        setFilteredDoctors(docsForClinicAndCategory);
         updated.doctorId = "";
         updated.jadwalId = "";
         setAvailableSchedules([]);
@@ -229,6 +251,7 @@ const PatientData = () => {
             <p>Pilih klinik, dokter, dan keluhan Anda.</p>
           </div>
 
+          {/* 1. LOKASI KLINIK */}
           <div className="form-group">
             <label htmlFor="clinicId">Pilih Lokasi Klinik *</label>
             <div className="select-wrapper">
@@ -244,14 +267,53 @@ const PatientData = () => {
             </div>
           </div>
 
+          {/* 2. KATEGORI DOKTER */}
+          <div className="form-group">
+            <label htmlFor="category">Pilih Kategori Dokter *</label>
+            <div className="select-wrapper">
+              <span className="field-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49 0 2.87.47 4 1.26V8c0-1.1-.9-2-2-2h-4V4c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2v2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h8.26c-.16-.64-.26-1.31-.26-2 0-4.42 3.58-8 8-8zm-5-8h-4V4h4v2z"/></svg>
+              </span>
+              <select 
+                id="category" 
+                name="category" 
+                value={formData.category} 
+                onChange={handleChange} 
+                required 
+                disabled={!formData.clinicId}
+              >
+                <option value="">
+                  {formData.clinicId ? "Pilih kategori dokter" : "Pilih klinik terlebih dahulu"}
+                </option>
+                {availableCategories.map((cat, idx) => (
+                  <option key={idx} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* 3. PILIH DOKTER */}
           <div className="form-group">
             <label htmlFor="doctorId">Pilih Dokter *</label>
             <div className="select-wrapper">
               <span className="field-icon">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
               </span>
-              <select id="doctorId" name="doctorId" value={formData.doctorId} onChange={handleChange} required disabled={!formData.clinicId}>
-                <option value="">{formData.clinicId ? "Pilih dokter" : "Pilih klinik terlebih dahulu"}</option>
+              <select 
+                id="doctorId" 
+                name="doctorId" 
+                value={formData.doctorId} 
+                onChange={handleChange} 
+                required 
+                disabled={!formData.category}
+              >
+                <option value="">
+                  {!formData.clinicId 
+                    ? "Pilih klinik terlebih dahulu" 
+                    : !formData.category 
+                    ? "Pilih kategori dokter terlebih dahulu" 
+                    : "Pilih dokter"}
+                </option>
                 {filteredDoctors.map((doc, idx) => (
                   <option key={doc.id || `doc-${idx}`} value={doc.id}>{doc.nama} ({doc.spesialisasi})</option>
                 ))}
@@ -259,6 +321,7 @@ const PatientData = () => {
             </div>
           </div>
 
+          {/* JADWAL PRAKTIK */}
           {availableSchedules.length > 0 && (
             <div className="form-group">
               <label htmlFor="jadwalId">Jadwal Praktik *</label>
@@ -277,6 +340,7 @@ const PatientData = () => {
             </div>
           )}
 
+          {/* KELUHAN UTAMA */}
           <div className="form-group">
             <label htmlFor="complaint">Keluhan Utama *</label>
             <div className="select-wrapper">

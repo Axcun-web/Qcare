@@ -260,3 +260,156 @@
     grid-template-columns: 1fr;
   }
 }
+
+.petugas-doctor-section {
+  margin-bottom: 32px;
+}
+.section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.section-header-flex h2 {
+  font-size: 20px;
+  margin: 0 0 5px;
+}
+.section-header-flex p {
+  font-size: 12px;
+  color: #718b7d;
+  margin: 0;
+}
+.doctor-search-box input {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  min-width: 240px;
+  transition: border-color 0.2s ease;
+}
+.doctor-search-box input:focus {
+  border-color: #26734d;
+  outline: none;
+}
+
+.doctor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.empty-doctor-state {
+  grid-column: 1 / -1;
+  padding: 32px;
+  text-align: center;
+  color: #718b7d;
+  background: #fff;
+  border: 1px solid #d6e5d9;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.doctor-card {
+  background: #fff;
+  border: 1px solid #d6e5d9;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+.doctor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.doctor-card-name {
+  display: block;
+  font-size: 15px;
+  color: #1b4032;
+}
+.doctor-card-spec {
+  display: block;
+  font-size: 12px;
+  color: #718b7d;
+  margin-top: 2px;
+}
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.status-pill.active {
+  background: #e8f0eb;
+  color: #187b51;
+}
+.status-pill.inactive {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.doctor-queue-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+  border-radius: 8px;
+  background: #f4f8f5;
+}
+.metric-box.active-metric {
+  background: #e0e7ff;
+}
+.metric-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1b4032;
+}
+.metric-lbl {
+  font-size: 10px;
+  color: #718b7d;
+  text-align: center;
+}
+
+.doctor-schedule-list {
+  border-top: 1px solid #d6e5d9;
+  padding-top: 12px;
+}
+.schedule-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6d8d7c;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+}
+.schedule-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.schedule-chip {
+  background: #f4f8f5;
+  border: 1px solid #d6e5d9;
+  color: #1b4032;
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 6px;
+}
+.no-schedule {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.pagination {
+  display: flex;
+}
