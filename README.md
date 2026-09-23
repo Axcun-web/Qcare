@@ -56,8 +56,23 @@ cd backend
 npm install
 cp .env.example .env          # nilai default sudah cocok dengan docker-compose
 npx prisma migrate dev        # membuat tabel sesuai skema
+npm run prisma:seed           # akun demo + klinik, dokter, jadwal contoh
 npm run dev                   # http://localhost:4000
 ```
+
+#### Akun demo
+
+Dibuat oleh `npm run prisma:seed` (`backend/prisma/seed.js`). Seed aman
+dijalankan berulang kali dan tidak menimpa password akun yang sudah ada.
+
+| Role       | Email               | Password       | Catatan                          |
+| ---------- | ------------------- | -------------- | -------------------------------- |
+| SUPERADMIN | `admin@gmail.com`   | `admin12345`   | Akses `/admin`                   |
+| PETUGAS    | `petugas@gmail.com` | `petugas12345` | Ditugaskan ke Klinik Qcare Pusat |
+| PASIEN     | `pasien@gmail.com`  | `pasien12345`  | Sudah punya data pasien sendiri  |
+
+Kredensial ini **hanya untuk pengembangan lokal**; seed menolak berjalan
+saat `NODE_ENV=production`.
 
 ### 3. Frontend
 

@@ -1,8 +1,8 @@
 /**
  * Seed data pengembangan Qcare.
  *
- * Tujuan: setiap kolaborator memperoleh satu akun SUPERADMIN dan data master
- * minimum tanpa perlu menyiapkannya manual. Registrasi mandiri selalu
+ * Tujuan: setiap kolaborator memperoleh satu akun demo per role (SUPERADMIN,
+ * PETUGAS, PASIEN) dan data master minimum tanpa perlu menyiapkannya manual. Registrasi mandiri selalu
  * menghasilkan role PASIEN (lihat auth.service.js), dan akun SUPERADMIN hanya
  * bisa dibuat oleh SUPERADMIN lain — sehingga tanpa seed ini tidak ada cara
  * membuat SUPERADMIN pertama selain lewat SQL manual.
@@ -28,8 +28,29 @@ const prisma = new PrismaClient();
 // dengan hasil registrasi biasa.
 const SALT_ROUNDS = 10;
 
-const ADMIN_EMAIL = "admin@gmail.com";
-const ADMIN_PASSWORD = "admin12345";
+// Satu akun per role agar setiap alur (admin, petugas, pasien) bisa langsung
+// dicoba. Kredensial petugas & pasien mengikuti akun demo yang sudah dipakai
+// tim sebelumnya, sehingga DB lokal yang sudah memilikinya tetap konsisten.
+const DEMO_USERS = [
+  {
+    nama: "Super Admin",
+    email: "admin@gmail.com",
+    password: "admin12345",
+    role: "SUPERADMIN",
+  },
+  {
+    nama: "Petugas Demo",
+    email: "petugas@gmail.com",
+    password: "petugas12345",
+    role: "PETUGAS",
+  },
+  {
+    nama: "Pasien Demo",
+    email: "pasien@gmail.com",
+    password: "pasien12345",
+    role: "PASIEN",
+  },
+];
 
 const CLINIC_NAME = "Klinik Qcare Pusat";
 const DOCTOR_NAME = "dr. Contoh Dokter";
@@ -44,48 +65,104 @@ const DOCTOR_NAME = "dr. Contoh Dokter";
 const toTime = (hhmm) => new Date(`1970-01-01T${hhmm}:00.000Z`);
 
 /**
- * Membuat atau menegakkan akun SUPERADMIN.
+ * Membuat atau menegakkan satu akun demo.
  *
  * Password TIDAK ditimpa pada akun yang sudah ada, supaya developer yang sudah
  * memakai akun ini dengan password sendiri tidak kehilangan akses. Yang
- * ditegakkan hanya role dan status aktif.
+ * ditegakkan hanya role, status aktif, dan (untuk PETUGAS) klinik.
  *
- * @returns {Promise<void>}
+ * @param {{ nama: string, email: string, password: string, role: string }} demo
+ * @param {bigint} clinicId - Hanya dipakai untuk PETUGAS.
+ * @returns {Promise<{ id: bigint }>}
  */
-async function seedSuperadmin() {
+async function seedUser(demo, clinicId) {
+  const enforced = {
+    role: demo.role,
+    isActive: true,
+    clinicId: demo.role === "PETUGAS" ? clinicId : null,
+  };
+
   const existing = await prisma.user.findUnique({
-    where: { email: ADMIN_EMAIL },
-    select: { id: true, role: true },
+    where: { email: demo.email },
+    select: { id: true, role: true, isActive: true, clinicId: true },
   });
 
   if (existing !== null) {
-    if (existing.role === "SUPERADMIN") {
-      console.log(`  user      : ${ADMIN_EMAIL} sudah SUPERADMIN, dilewati`);
-      return;
+    const upToDate =
+      existing.role === enforced.role &&
+      existing.isActive &&
+      existing.clinicId === enforced.clinicId;
+
+    if (upToDate) {
+      console.log(`  user      : ${demo.email} sudah ${demo.role}, dilewati`);
+      return existing;
     }
 
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: { role: "SUPERADMIN", isActive: true },
-    });
+    await prisma.user.update({ where: { id: existing.id }, data: enforced });
 
-    console.log(`  user      : ${ADMIN_EMAIL} dipromosikan ke SUPERADMIN`);
-    return;
+    console.log(`  user      : ${demo.email} ditegakkan sebagai ${demo.role}`);
+    return existing;
   }
 
-  await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
-      nama: "Super Admin",
-      email: ADMIN_EMAIL,
-      password: await bcrypt.hash(ADMIN_PASSWORD, SALT_ROUNDS),
-      role: "SUPERADMIN",
-      isActive: true,
+      nama: demo.nama,
+      email: demo.email,
+      password: await bcrypt.hash(demo.password, SALT_ROUNDS),
+      ...enforced,
     },
+    select: { id: true },
   });
 
   console.log(
-    `  user      : ${ADMIN_EMAIL} dibuat (password: ${ADMIN_PASSWORD})`,
+    `  user      : ${demo.email} dibuat (password: ${demo.password})`,
   );
+  return created;
+}
+
+/**
+ * Data pasien "Diri sendiri" untuk akun pasien demo.
+ *
+ * Tanpa record ini pasien demo harus mengisi data diri dulu sebelum bisa
+ * mengambil antrean.
+ *
+ * @param {bigint} userId
+ * @returns {Promise<void>}
+ */
+async function seedRecordPasien(userId) {
+  const exists = await prisma.recordPasien.findFirst({ where: { userId } });
+
+  if (exists !== null) {
+    console.log("  record    : data pasien demo sudah ada, dilewati");
+    return;
+  }
+
+  await prisma.recordPasien.create({
+    data: {
+      userId,
+      nama: "Pasien Demo",
+      tanggalLahir: new Date("1995-01-01"),
+      tempatLahir: "Jakarta",
+      jenisKelamin: "Laki-laki",
+      hubungan: "Diri sendiri",
+    },
+  });
+
+  console.log("  record    : data pasien demo dibuat");
+}
+
+/**
+ * @param {bigint} clinicId - Klinik tempat petugas demo ditugaskan.
+ * @returns {Promise<void>}
+ */
+async function seedUsers(clinicId) {
+  for (const demo of DEMO_USERS) {
+    const user = await seedUser(demo, clinicId);
+
+    if (demo.role === "PASIEN") {
+      await seedRecordPasien(user.id);
+    }
+  }
 }
 
 /**
@@ -98,7 +175,7 @@ async function seedSuperadmin() {
  * Clinic dan Doctor tidak punya kolom unique selain id, jadi idempotensi
  * dicapai lewat findFirst by nama, bukan upsert.
  *
- * @returns {Promise<void>}
+ * @returns {Promise<bigint>} id klinik, dipakai untuk menugaskan petugas demo.
  */
 async function seedMasterData() {
   let clinic = await prisma.clinic.findFirst({ where: { nama: CLINIC_NAME } });
@@ -173,6 +250,8 @@ async function seedMasterData() {
       ? `  jadwal    : ${created} jadwal praktik dibuat`
       : "  jadwal    : semua jadwal sudah ada, dilewati",
   );
+
+  return clinic.id;
 }
 
 /**
@@ -189,8 +268,9 @@ async function main() {
 
   console.log("Menjalankan seed pengembangan...");
 
-  await seedSuperadmin();
-  await seedMasterData();
+  // Master data lebih dulu: petugas demo butuh id klinik.
+  const clinicId = await seedMasterData();
+  await seedUsers(clinicId);
 
   console.log("Seed selesai.");
 }
