@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../../lib/api";
+import { formatQueueNumber } from "../../lib/queueNumber";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./History.css";
 
@@ -131,7 +132,7 @@ const History = () => {
                 <li key={entry.id} className="history-full-item">
                   <div className="history-full-main">
                     <span className="history-queue-number">
-                      #{entry.nomorAntrean}
+                      {formatQueueNumber(entry.doctorId, entry.nomorAntrean)}
                     </span>
                     <div>
                       <strong>{entry.clinic?.nama ?? "-"}</strong>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
+import { formatQueueNumber } from "../../lib/queueNumber";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./Appointments.css";
 
@@ -22,19 +23,16 @@ const Appointments = () => {
       if (response.success) {
         const allQueues = response.data || [];
         const active = allQueues.filter((q) =>
-          ["MENUNGGU", "SEDANG_DIPANGGIL", "SEDANG_DILAYANI"].includes(q.status)
+          ["MENUNGGU", "SEDANG_DIPANGGIL", "SEDANG_DILAYANI"].includes(
+            q.status,
+          ),
         );
-        
-        active.forEach(q => {
-          const simulatedPeopleAhead = Math.max(0, q.nomorAntrean - 1);
-          q.peopleAhead = simulatedPeopleAhead;
-          q.estimatedWaitTime = simulatedPeopleAhead > 0 ? simulatedPeopleAhead * 15 : 0;
-          q.currentServing = q.nomorAntrean > 1 ? `A-${q.nomorAntrean - simulatedPeopleAhead}` : "-";
-        });
-        
+
+        // peopleAhead / estimatedWaitTime / currentQueueNumber come from the
+        // backend (queueService.mine -> liveQueueStatus, ML-based estimate).
         // Sort queues so the one with the fewest people ahead (fastest) is at the top
         active.sort((a, b) => a.peopleAhead - b.peopleAhead);
-        
+
         setActiveQueues(active);
       }
     } catch (err) {
@@ -46,7 +44,9 @@ const Appointments = () => {
   };
 
   const handleCancelQueue = async (id) => {
-    const confirmCancel = window.confirm("Apakah Anda yakin ingin membatalkan antrean ini?");
+    const confirmCancel = window.confirm(
+      "Apakah Anda yakin ingin membatalkan antrean ini?",
+    );
     if (!confirmCancel) return;
 
     try {
@@ -79,16 +79,30 @@ const Appointments = () => {
         </section>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>Memuat antrean...</div>
+          <div
+            style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}
+          >
+            Memuat antrean...
+          </div>
         ) : error ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#dc2626" }}>{error}</div>
+          <div
+            style={{ textAlign: "center", padding: "40px", color: "#dc2626" }}
+          >
+            {error}
+          </div>
         ) : activeQueues.length > 0 ? (
           <section className="appointment-layout">
             <div className="active-queues-list">
               {activeQueues.map((activeQueue) => (
-                <div key={activeQueue.id} className="queue-card" style={{ marginBottom: '24px' }}>
+                <div
+                  key={activeQueue.id}
+                  className="queue-card"
+                  style={{ marginBottom: "24px" }}
+                >
                   <div className="queue-card-content">
-                    <div className="clinic-badge">+ {activeQueue.clinic?.nama || "Klinik"}</div>
+                    <div className="clinic-badge">
+                      + {activeQueue.clinic?.nama || "Klinik"}
+                    </div>
                     <div className="queue-top">
                       <div className="doctor-information">
                         <h2>{activeQueue.doctor?.nama || "Dokter"}</h2>
@@ -96,48 +110,72 @@ const Appointments = () => {
                       </div>
                       <div className="queue-number">
                         <span>NOMOR ANTREAN</span>
-                        <strong>A-{activeQueue.nomorAntrean}</strong>
+                        <strong>
+                          {formatQueueNumber(
+                            activeQueue.doctorId,
+                            activeQueue.nomorAntrean,
+                          )}
+                        </strong>
                       </div>
                     </div>
 
                     <div className="waiting-information">
                       <div className="waiting-left">
-                        <div className="clock-icon"><span></span></div>
+                        <div className="clock-icon">
+                          <span></span>
+                        </div>
                         <div>
                           <p>Estimasi Waktu Tunggu</p>
-                          <strong>~{activeQueue.estimatedWaitTime} Menit</strong>
+                          <strong>
+                            ~{activeQueue.estimatedWaitTime} Menit
+                          </strong>
                         </div>
                       </div>
                       <div className="current-queue">
                         <p>Antrean Saat Ini</p>
-                        <strong>{activeQueue.currentServing}</strong>
+                        <strong>
+                          {activeQueue.currentQueueNumber === "-"
+                            ? "-"
+                            : formatQueueNumber(
+                                activeQueue.doctorId,
+                                activeQueue.currentQueueNumber,
+                              )}
+                        </strong>
                       </div>
                     </div>
 
                     <div className="queue-progress-container">
                       <div className="queue-progress">
-                        <div 
-                          className="queue-progress-fill" 
-                          style={{ width: `${Math.max(10, 100 - (activeQueue.peopleAhead * 20))}%` }}
+                        <div
+                          className="queue-progress-fill"
+                          style={{
+                            width: `${Math.max(10, 100 - activeQueue.peopleAhead * 20)}%`,
+                          }}
                         ></div>
                       </div>
                       <p>
-                        {activeQueue.peopleAhead > 0 
-                          ? `${activeQueue.peopleAhead} orang di depan Anda` 
+                        {activeQueue.peopleAhead > 0
+                          ? `${activeQueue.peopleAhead} orang di depan Anda`
                           : "Giliran Anda berikutnya!"}
                       </p>
                     </div>
 
-                    <div className={`queue-status status-text-${activeQueue.status.toLowerCase()}`}>
-                      <span className={`status-dot ${activeQueue.status.toLowerCase()}`}></span>
-                      {activeQueue.status === "SEDANG_DIPANGGIL" ? "Menuju Ruang Dokter" : 
-                      activeQueue.status === "SEDANG_DILAYANI" ? "Sedang Dilayani" : 
-                      "Menunggu Giliran"}
+                    <div
+                      className={`queue-status status-text-${activeQueue.status.toLowerCase()}`}
+                    >
+                      <span
+                        className={`status-dot ${activeQueue.status.toLowerCase()}`}
+                      ></span>
+                      {activeQueue.status === "SEDANG_DIPANGGIL"
+                        ? "Menuju Ruang Dokter"
+                        : activeQueue.status === "SEDANG_DILAYANI"
+                          ? "Sedang Dilayani"
+                          : "Menunggu Giliran"}
                     </div>
                   </div>
 
                   <div className="queue-card-actions">
-                    <button 
+                    <button
                       className="cancel-btn"
                       onClick={() => handleCancelQueue(activeQueue.id)}
                     >
@@ -152,10 +190,12 @@ const Appointments = () => {
                 <div className="info-circle">i</div>
                 <div>
                   <h3>Tetap di area klinik</h3>
-                  <p>Pastikan Anda berada di sekitar klinik agar tidak melewatkan giliran.</p>
+                  <p>
+                    Pastikan Anda berada di sekitar klinik agar tidak melewatkan
+                    giliran.
+                  </p>
                 </div>
               </div>
-
             </aside>
           </section>
         ) : (

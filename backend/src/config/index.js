@@ -17,6 +17,12 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET minimal 32 karakter"),
   JWT_EXPIRES_IN: z.string().default("1d"),
   PREDICTION_SERVICE_URL: z.string().url().optional(),
+  // Shared secret for POST /train on the prediction service; unset = no auto-retrain.
+  // An empty value (as copied from .env.example) counts as unset.
+  PREDICTION_TRAIN_TOKEN: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(16).optional(),
+  ),
 });
 
 const parsed = envSchema.safeParse(process.env);

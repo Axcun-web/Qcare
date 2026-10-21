@@ -1,0 +1,153 @@
+{
+  "model_version": "rf-v3-20261014-122050",
+  "trained_at": "2026-10-14T12:21:35",
+  "sources": {
+    "hangu": 6637,
+    "qcare": 0
+  },
+  "sessions": {
+    "total": 381,
+    "train": 304
+  },
+  "split": "kronologis per sesi (80%/20%): latih sesi <= 304, uji sesi > 304",
+  "cutoff_session_order": 304,
+  "deployed_model": "parameter terbaik dilatih ulang pada SELURUH data; metrik di bawah dari model yang dilatih pada data latih saja",
+  "wait": {
+    "n_test": 12608,
+    "n_sessions": 77,
+    "random_forest": {
+      "mae_min": 12.964,
+      "rmse_min": 17.802,
+      "r2": 0.917
+    },
+    "baseline_historical_avg": {
+      "mae_min": 13.901,
+      "rmse_min": 18.795,
+      "r2": 0.908
+    },
+    "mae_improvement_ci95_min": [
+      0.14,
+      1.74
+    ],
+    "mae_by_patients_ahead": {
+      "1-3": {
+        "n": 3774,
+        "rf_mae_min": 7.98,
+        "baseline_mae_min": 7.92
+      },
+      "4-8": {
+        "n": 4750,
+        "rf_mae_min": 13.31,
+        "baseline_mae_min": 14.09
+      },
+      "9-15": {
+        "n": 3460,
+        "rf_mae_min": 16.9,
+        "baseline_mae_min": 18.56
+      },
+      "16-40": {
+        "n": 624,
+        "rf_mae_min": 18.63,
+        "baseline_mae_min": 22.82
+      }
+    },
+    "by_source": {
+      "hangu": {
+        "n_test": 12608,
+        "n_sessions": 77,
+        "random_forest": {
+          "mae_min": 12.964,
+          "rmse_min": 17.802,
+          "r2": 0.917
+        },
+        "baseline_historical_avg": {
+          "mae_min": 13.901,
+          "rmse_min": 18.795,
+          "r2": 0.908
+        },
+        "mae_improvement_ci95_min": [
+          0.14,
+          1.74
+        ],
+        "mae_by_patients_ahead": {
+          "1-3": {
+            "n": 3774,
+            "rf_mae_min": 7.98,
+            "baseline_mae_min": 7.92
+          },
+          "4-8": {
+            "n": 4750,
+            "rf_mae_min": 13.31,
+            "baseline_mae_min": 14.09
+          },
+          "9-15": {
+            "n": 3460,
+            "rf_mae_min": 16.9,
+            "baseline_mae_min": 18.56
+          },
+          "16-40": {
+            "n": 624,
+            "rf_mae_min": 18.63,
+            "baseline_mae_min": 22.82
+          }
+        }
+      }
+    }
+  },
+  "service": {
+    "n_test": 1412,
+    "random_forest": {
+      "mae_min": 4.81,
+      "rmse_min": 6.317,
+      "r2": 0.001
+    },
+    "baseline_historical_avg": {
+      "mae_min": 4.815,
+      "rmse_min": 6.333,
+      "r2": -0.003
+    },
+    "by_source": {
+      "hangu": {
+        "n_test": 1412,
+        "random_forest": {
+          "mae_min": 4.81,
+          "rmse_min": 6.317,
+          "r2": 0.001
+        },
+        "baseline_historical_avg": {
+          "mae_min": 4.815,
+          "rmse_min": 6.333,
+          "r2": -0.003
+        }
+      }
+    }
+  },
+  "incumbent": null,
+  "feature_importance": {
+    "wait": {
+      "patients_ahead": 0.969,
+      "hour": 0.024,
+      "day_of_week": 0.007,
+      "queue_position": 0.0
+    },
+    "service": {
+      "queue_position": 0.431,
+      "day_of_week": 0.354,
+      "hour": 0.215
+    }
+  },
+  "best_params": {
+    "wait": {
+      "rf__max_features": 1.0,
+      "rf__min_samples_leaf": 20
+    },
+    "service": {
+      "rf__max_features": 0.6,
+      "rf__min_samples_leaf": 100
+    }
+  },
+  "promotion": {
+    "approved": true,
+    "reason": "tidak ada pembanding data uji Qcare"
+  }
+}

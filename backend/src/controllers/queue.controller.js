@@ -5,20 +5,16 @@ export const queueController = {
     res.json({ success: true, data: await queueService.listDoctors() }),
   ),
   create: asyncHandler(async (req, res) =>
-    res
-      .status(201)
-      .json({
-        success: true,
-        data: await queueService.create(req.user.id, req.body),
-      }),
+    res.status(201).json({
+      success: true,
+      data: await queueService.create(req.user.id, req.body),
+    }),
   ),
   createWalkIn: asyncHandler(async (req, res) =>
-    res
-      .status(201)
-      .json({
-        success: true,
-        data: await queueService.createWalkIn(req.user, req.body),
-      }),
+    res.status(201).json({
+      success: true,
+      data: await queueService.createWalkIn(req.user, req.body),
+    }),
   ),
   mine: asyncHandler(async (req, res) =>
     res.json({ success: true, data: await queueService.mine(req.user.id) }),
@@ -39,6 +35,12 @@ export const queueController = {
     res.json({
       success: true,
       data: await queueService.staffQueue(req.user, req.query.date),
+    }),
+  ),
+  arrival: asyncHandler(async (req, res) =>
+    res.json({
+      success: true,
+      data: await queueService.recordArrival(req.user, req.params.id),
     }),
   ),
   status: asyncHandler(async (req, res) =>

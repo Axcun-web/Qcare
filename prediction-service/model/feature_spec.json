@@ -1,0 +1,56 @@
+{
+  "model_version": "rf-v3-20261014-122050",
+  "artifact": "model.joblib (dict of sklearn Pipeline[StandardScaler, RandomForestRegressor]: wait, service; plus wait_features, service_features, target, version)",
+  "target": "ratio_to_doctor_avg_service_min -> kalikan prediksi dengan doctor_avg_service_min",
+  "input": {
+    "queue_position": "int >= 1, nomor urut pasien pada sesi/hari itu",
+    "patients_ahead": "int >= 1, jumlah pasien yang dilayani sebelum pasien ini (termasuk yang sedang dilayani)",
+    "day_of_week": "int 0-6, Senin=0 ... Minggu=6",
+    "hour": "int 0-23, jam WIB SAAT prediksi dibuat",
+    "doctor_avg_service_min": "float, rata-rata SELURUH durasi pelayanan dokter di ServiceHistory (menit). Hanya dipakai sebagai pengali, bukan fitur model."
+  },
+  "output": {
+    "estimated_wait_min": "float = wait.predict(X[wait_features]) * doctor_avg_service_min",
+    "estimated_service_min": "float = service.predict(X[service_features]) * doctor_avg_service_min",
+    "model_version": "str"
+  },
+  "wait_features": [
+    "queue_position",
+    "patients_ahead",
+    "day_of_week",
+    "hour"
+  ],
+  "service_features": [
+    "queue_position",
+    "day_of_week",
+    "hour"
+  ],
+  "cold_start_avg_service_min": 13.451,
+  "fallback_formula": "estimated_wait_min = patients_ahead * doctor_avg_service_min",
+  "valid_ranges": {
+    "queue_position": [
+      1,
+      32
+    ],
+    "patients_ahead": [
+      1,
+      31
+    ],
+    "hour": [
+      8,
+      20
+    ],
+    "day_of_week_seen": [
+      1,
+      2,
+      4,
+      5
+    ]
+  },
+  "out_of_range_note": "Nilai di luar valid_ranges tidak pernah dilihat model; clamp kolom fitur ke valid_ranges dan tandai out-of-distribution di log. doctor_avg_service_min TIDAK di-clamp (hanya pengali) agar dokter yang lebih cepat/lambat tetap tercermin.",
+  "sources": {
+    "hangu": 6637,
+    "qcare": 0
+  },
+  "dataset": "Feng et al. (2023), Data 8(3), 47, doi:10.3390/data8030047; data doi:10.5281/zenodo.7476233; CC BY-NC-SA 4.0. Ditambah antrean SELESAI Qcare."
+}

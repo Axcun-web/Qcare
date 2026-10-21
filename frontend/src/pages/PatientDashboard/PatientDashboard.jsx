@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
+import { formatQueueNumber } from "../../lib/queueNumber";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./PatientDashboard.css";
 
@@ -89,7 +90,7 @@ const PatientDashboard = () => {
                     <span className="clinic-badge">🏥 {dashboardData.activeQueue.clinicNama}</span>
                     <div className="queue-number-block">
                       <span className="queue-label">NOMOR ANTREAN</span>
-                      <span className="queue-number">A-{dashboardData.activeQueue.nomorAntrean}</span>
+                      <span className="queue-number">{formatQueueNumber(dashboardData.activeQueue.doctorId, dashboardData.activeQueue.nomorAntrean)}</span>
                     </div>
                   </div>
                   <div className="doctor-info">
@@ -108,7 +109,7 @@ const PatientDashboard = () => {
                       <span className="stat-label">Antrean Saat Ini</span>
                       <span className="stat-value">
                         {dashboardData.activeQueue.currentQueueNumber !== "-" 
-                          ? `A-${dashboardData.activeQueue.currentQueueNumber}` 
+                          ? formatQueueNumber(dashboardData.activeQueue.doctorId, dashboardData.activeQueue.currentQueueNumber) 
                           : "Belum Dimulai"}
                       </span>
                     </div>

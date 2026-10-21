@@ -32,6 +32,12 @@ router.get(
   queueController.staff,
 );
 router.patch(
+  "/:id/arrival",
+  authenticate,
+  authorize("PETUGAS", "SUPERADMIN"),
+  queueController.arrival,
+);
+router.patch(
   "/:id/status",
   authenticate,
   authorize("PASIEN", "PETUGAS", "SUPERADMIN"),

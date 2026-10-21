@@ -153,7 +153,12 @@ model Antrean {
   status              StatusAntrean @default(MENUNGGU)
   sumber              SumberAntrean @default(ONLINE)
   tanggal             DateTime      @db.Date
-  timestampKedatangan DateTime?     @map("timestamp_kedatangan") @db.Timestamptz
+  /// Waktu pasien benar-benar tiba di klinik: walk-in saat didaftarkan,
+  /// online saat petugas menandai "Hadir". Null = kedatangan belum tercatat.
+  timestampKedatangan   DateTime? @map("timestamp_kedatangan") @db.Timestamptz
+  /// Waktu mulai dilayani dokter (status SEDANG_DILAYANI). Awal durasi
+  /// pelayanan di ServiceHistory.
+  timestampMulaiLayanan DateTime? @map("timestamp_mulai_layanan") @db.Timestamptz
   alasanTidakHadir    String?       @map("alasan_tidak_hadir") @db.VarChar(255)
   createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz
@@ -167,8 +172,9 @@ model Antrean {
   feedback          Feedback[]
   notifications     Notification[]
 
-  // Satu nomor antrean unik per jadwal per tanggal.
-  @@unique([jadwalId, tanggal, nomorAntrean], map: "antrean_jadwal_tanggal_nomor_key")
+  // Satu nomor antrean unik per dokter per tanggal (D{doctorId}-NN), lintas
+  // semua jadwal dokter tersebut pada hari itu.
+  @@unique([doctorId, tanggal, nomorAntrean], map: "antrean_doctor_tanggal_nomor_key")
   @@index([tanggal, status])
   @@index([doctorId, tanggal])
   @@index([recordPasienId])

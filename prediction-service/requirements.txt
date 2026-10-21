@@ -1,0 +1,9 @@
+# Serving dependencies. The ML pins MUST match training/requirements.txt,
+# because model.joblib is a pickle and breaks across scikit-learn versions.
+-r training/requirements.txt
+fastapi==0.142.2
+uvicorn==0.54.0
+pydantic==2.13.5
+# tests
+httpx==0.28.1
+pytest==9.1.1
