@@ -75,4 +75,3 @@ Manual: `.venv/Scripts/python training/train.py` (`--no-qcare` = Hangu saja,
 
 
 
-hellodada
