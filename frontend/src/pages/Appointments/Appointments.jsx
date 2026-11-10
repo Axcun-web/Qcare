@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { formatQueueNumber } from "../../lib/queueNumber";
+import { formatVisitDate } from "../../lib/visitDates";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./Appointments.css";
 
@@ -107,6 +108,9 @@ const Appointments = () => {
                       <div className="doctor-information">
                         <h2>{activeQueue.doctor?.nama || "Dokter"}</h2>
                         <p>{activeQueue.doctor?.spesialisasi || "Umum"}</p>
+                        <p className="visit-date">
+                          Kunjungan: {formatVisitDate(activeQueue.tanggal)}
+                        </p>
                       </div>
                       <div className="queue-number">
                         <span>NOMOR ANTREAN</span>
@@ -127,7 +131,9 @@ const Appointments = () => {
                         <div>
                           <p>Estimasi Waktu Tunggu</p>
                           <strong>
-                            ~{activeQueue.estimatedWaitTime} Menit
+                            {activeQueue.isFutureVisit
+                              ? "Tersedia pada hari kunjungan"
+                              : `~${activeQueue.estimatedWaitTime} Menit`}
                           </strong>
                         </div>
                       </div>
@@ -149,14 +155,16 @@ const Appointments = () => {
                         <div
                           className="queue-progress-fill"
                           style={{
-                            width: `${Math.max(10, 100 - activeQueue.peopleAhead * 20)}%`,
+                            width: `${activeQueue.isFutureVisit ? 0 : Math.max(10, 100 - activeQueue.peopleAhead * 20)}%`,
                           }}
                         ></div>
                       </div>
                       <p>
-                        {activeQueue.peopleAhead > 0
-                          ? `${activeQueue.peopleAhead} orang di depan Anda`
-                          : "Giliran Anda berikutnya!"}
+                        {activeQueue.isFutureVisit
+                          ? "Antrean dimulai pada hari kunjungan"
+                          : activeQueue.peopleAhead > 0
+                            ? `${activeQueue.peopleAhead} orang di depan Anda`
+                            : "Giliran Anda berikutnya!"}
                       </p>
                     </div>
 
@@ -174,14 +182,17 @@ const Appointments = () => {
                     </div>
                   </div>
 
-                  <div className="queue-card-actions">
-                    <button
-                      className="cancel-btn"
-                      onClick={() => handleCancelQueue(activeQueue.id)}
-                    >
-                      Batalkan Antrean
-                    </button>
-                  </div>
+                  {/* Patients may cancel only while still waiting. */}
+                  {activeQueue.status === "MENUNGGU" && (
+                    <div className="queue-card-actions">
+                      <button
+                        className="cancel-btn"
+                        onClick={() => handleCancelQueue(activeQueue.id)}
+                      >
+                        Batalkan Antrean
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

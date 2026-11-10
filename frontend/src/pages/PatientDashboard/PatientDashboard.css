@@ -688,3 +688,10 @@
 .status-SELESAI { background: #eaf7ef !important; color: #1e7a41 !important; }
 .status-DILEWATI { background: #f8d7da !important; color: #721c24 !important; }
 .status-DIBATALKAN { background: #f8d7da !important; color: #721c24 !important; }
+
+.queue-card .visit-date {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e6b3a;
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { formatQueueNumber } from "../../lib/queueNumber";
+import { formatVisitDate } from "../../lib/visitDates";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./PatientDashboard.css";
 
@@ -96,6 +97,7 @@ const PatientDashboard = () => {
                   <div className="doctor-info">
                     <h2>{dashboardData.activeQueue.doctorNama}</h2>
                     <p>{dashboardData.activeQueue.doctorSpesialisasi}</p>
+                    <p className="visit-date">Kunjungan: {formatVisitDate(dashboardData.activeQueue.tanggal)}</p>
                   </div>
                   <div className="queue-stats">
                     <div className="stat-item">
@@ -103,7 +105,7 @@ const PatientDashboard = () => {
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         Estimasi Waktu Tunggu
                       </span>
-                      <span className="stat-value">~{dashboardData.activeQueue.estimatedWaitTime} Menit</span>
+                      <span className="stat-value">{dashboardData.activeQueue.isFutureVisit ? "Tersedia pada hari kunjungan" : `~${dashboardData.activeQueue.estimatedWaitTime} Menit`}</span>
                     </div>
                     <div className="stat-item text-right">
                       <span className="stat-label">Antrean Saat Ini</span>
@@ -116,22 +118,27 @@ const PatientDashboard = () => {
                   </div>
                   <div className="progress-container">
                     <div className="progress-bar">
-                      <div className="progress-fill" style={{ width: `${Math.max(10, 100 - (dashboardData.activeQueue.peopleAhead * 20))}%` }}></div>
+                      <div className="progress-fill" style={{ width: `${dashboardData.activeQueue.isFutureVisit ? 0 : Math.max(10, 100 - (dashboardData.activeQueue.peopleAhead * 20))}%` }}></div>
                     </div>
                     <span className="progress-text">
-                      {dashboardData.activeQueue.peopleAhead > 0 
+                      {dashboardData.activeQueue.isFutureVisit
+                        ? "Antrean dimulai pada hari kunjungan"
+                        : dashboardData.activeQueue.peopleAhead > 0 
                         ? `${dashboardData.activeQueue.peopleAhead} orang di depan Anda` 
                         : "Giliran Anda berikutnya!"}
                     </span>
                   </div>
-                  <div style={{ marginTop: '16px' }}>
-                    <button 
-                      onClick={handleCancelQueue} 
-                      className="btn-cancel-queue"
-                    >
-                      Batalkan Antrean
-                    </button>
-                  </div>
+                  {/* Patients may cancel only while still waiting. */}
+                  {dashboardData.activeQueue.status === "MENUNGGU" && (
+                    <div style={{ marginTop: '16px' }}>
+                      <button 
+                        onClick={handleCancelQueue} 
+                        className="btn-cancel-queue"
+                      >
+                        Batalkan Antrean
+                      </button>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="no-queue-block">

@@ -125,10 +125,23 @@ export default function PetugasDashboard() {
   };
 
   const updateStatus = async (id, status) => {
+    // Tabel 3.14 step 4: skipping records the reason the patient was absent.
+    let alasan;
+    if (status === "DILEWATI") {
+      alasan = window.prompt(
+        "Alasan pasien dilewati (wajib), misalnya: tidak hadir saat dipanggil",
+        "Tidak hadir saat dipanggil",
+      );
+      if (alasan === null) return;
+      if (!alasan.trim()) {
+        setMessage("Alasan tidak hadir wajib diisi.");
+        return;
+      }
+    }
     try {
       await api(`/queues/${id}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, alasan }),
       });
       loadQueue();
       setMessage("Status antrean berhasil diperbarui.");
@@ -495,7 +508,9 @@ export default function PetugasDashboard() {
                   paginatedQueues.map((q) => (
                     <tr key={q.id}>
                       <td>
-                        <strong>{formatQueueNumber(q.doctorId, q.nomorAntrean)}</strong>
+                        <strong>
+                          {formatQueueNumber(q.doctorId, q.nomorAntrean)}
+                        </strong>
                       </td>
                       <td>{q.recordPasien?.nama || "-"}</td>
                       <td>{q.doctor?.nama || "-"}</td>
@@ -503,6 +518,17 @@ export default function PetugasDashboard() {
                         <span className={`status-badge status-${q.status}`}>
                           {q.status ? q.status.replace(/_/g, " ") : "-"}
                         </span>
+                        {q.status === "DILEWATI" && q.alasanTidakHadir && (
+                          <small
+                            style={{
+                              display: "block",
+                              marginTop: 4,
+                              color: "#6b7280",
+                            }}
+                          >
+                            Alasan: {q.alasanTidakHadir}
+                          </small>
+                        )}
                       </td>
                       <td>
                         <div className="queue-actions">
