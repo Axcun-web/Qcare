@@ -1,6 +1,7 @@
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
+import { queueService } from "../services/queue.service.js";
 
 const clinicSelect = {
   id: true,
@@ -111,6 +112,8 @@ export const petugasController = {
     });
     if (!doc || doc.clinicId !== user.clinicId)
       throw ApiError.notFound("Dokter tidak ditemukan");
+    if (req.body.isActive === false)
+      await queueService.assertDoctorHasNoActiveQueues(doc.id);
 
     const doctor = await prisma.doctor.update({
       where: { id: doc.id },
@@ -145,6 +148,7 @@ export const petugasController = {
     });
     if (!doc || doc.clinicId !== user.clinicId)
       throw ApiError.notFound("Dokter tidak ditemukan");
+    await queueService.assertDoctorHasNoActiveQueues(doc.id);
 
     const doctor = await prisma.doctor.update({
       where: { id: doc.id },

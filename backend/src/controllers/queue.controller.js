@@ -50,6 +50,7 @@ export const queueController = {
         req.user,
         req.params.id,
         req.body.status,
+        req.body.alasan,
       ),
     }),
   ),

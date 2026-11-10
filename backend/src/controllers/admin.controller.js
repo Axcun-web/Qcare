@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
+import { queueService } from "../services/queue.service.js";
+import { findOverlappingSlot } from "../utils/queueRules.js";
 
 const clinicSelect = {
   id: true,
@@ -92,6 +94,25 @@ async function findJadwalWithClinic(id) {
   });
   if (!jadwal) throw ApiError.notFound("Jadwal tidak ditemukan");
   return jadwal;
+}
+
+/**
+ * Tabel 3.17 conflict check: the same doctor may not have two slots on the
+ * same weekday whose hours overlap.
+ *
+ * @param {bigint} doctorId
+ * @param {{ hari: string, jamMulai: Date, jamSelesai: Date }} slot
+ * @param {bigint} [ignoreId] - the slot being edited
+ */
+async function assertNoOverlappingSlot(doctorId, slot, ignoreId) {
+  const existing = await prisma.jadwalPraktikDokter.findMany({
+    where: { doctorId, hari: slot.hari },
+    select: { id: true, hari: true, jamMulai: true, jamSelesai: true },
+  });
+  if (findOverlappingSlot(slot, existing, ignoreId))
+    throw ApiError.conflict(
+      "Jadwal bentrok dengan jadwal lain dokter ini pada hari yang sama",
+    );
 }
 
 export const adminController = {
@@ -192,6 +213,8 @@ export const adminController = {
 
   updateDoctor: asyncHandler(async (req, res) => {
     const { nama, spesialisasi, isActive } = req.body;
+    if (isActive === false)
+      await queueService.assertDoctorHasNoActiveQueues(BigInt(req.params.id));
     res.json({
       success: true,
       data: await prisma.doctor.update({
@@ -206,6 +229,7 @@ export const adminController = {
   // foreign-key restrict error the moment any of those schedules has queue
   // history - soft delete sidesteps that entirely and keeps history intact.
   deleteDoctor: asyncHandler(async (req, res) => {
+    await queueService.assertDoctorHasNoActiveQueues(BigInt(req.params.id));
     const doctor = await prisma.doctor.update({
       where: { id: BigInt(req.params.id) },
       data: { isActive: false },
@@ -228,10 +252,12 @@ export const adminController = {
     });
     if (!doctor) throw ApiError.notFound("Dokter tidak ditemukan");
     await assertCanManageClinic(req.user, doctor.clinicId);
+    const data = jadwalData(req.body);
+    await assertNoOverlappingSlot(doctor.id, data);
     res.status(201).json({
       success: true,
       data: await prisma.jadwalPraktikDokter.create({
-        data: { doctorId: doctor.id, ...jadwalData(req.body) },
+        data: { doctorId: doctor.id, ...data },
       }),
     });
   }),
@@ -239,11 +265,22 @@ export const adminController = {
   updateJadwal: asyncHandler(async (req, res) => {
     const jadwal = await findJadwalWithClinic(BigInt(req.params.id));
     await assertCanManageClinic(req.user, jadwal.doctor.clinicId);
+    const data = jadwalData(req.body);
+    await assertNoOverlappingSlot(jadwal.doctorId, data, jadwal.id);
+    // Moving a slot to another weekday would leave booked patients on a day
+    // the doctor no longer practises.
+    if (
+      data.hari !== jadwal.hari &&
+      (await queueService.countActiveFromToday({ jadwalId: jadwal.id }))
+    )
+      throw ApiError.conflict(
+        "Hari jadwal tidak dapat diubah karena masih ada antrean aktif pada jadwal ini",
+      );
     res.json({
       success: true,
       data: await prisma.jadwalPraktikDokter.update({
         where: { id: jadwal.id },
-        data: jadwalData(req.body),
+        data,
       }),
     });
   }),
