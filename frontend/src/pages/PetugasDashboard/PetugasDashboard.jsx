@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../lib/api";
 import { formatQueueNumber } from "../../lib/queueNumber";
+import { formatVisitDate, visitDateOptions } from "../../lib/visitDates";
 import "./PetugasDashboard.css";
 import PetugasNavbar from "../../components/PetugasNavbar";
 
@@ -63,11 +64,20 @@ export default function PetugasDashboard() {
   const [showWalkIn, setShowWalkIn] = useState(false);
   const [walkInDoctorId, setWalkInDoctorId] = useState("");
   const [detailQueue, setDetailQueue] = useState(null);
+  // Tabel 3.16: move a waiting queue to another date.
+  const [rescheduleQueue, setRescheduleQueue] = useState(null);
+  const [rescheduleValue, setRescheduleValue] = useState("");
 
   const [searchDoctor, setSearchDoctor] = useState("");
-  const [filterDate, setFilterDate] = useState(
-    () => new Date().toISOString().split("T")[0],
-  );
+  const [filterDate, setFilterDate] = useState(() => {
+    // Local (WIB) date; toISOString() would give yesterday before 07:00.
+    const now = new Date();
+    return [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+  });
   const [searchName, setSearchName] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
@@ -147,6 +157,38 @@ export default function PetugasDashboard() {
       setMessage("Status antrean berhasil diperbarui.");
     } catch (err) {
       setMessage(err?.message || "Gagal memperbarui status");
+    }
+  };
+
+  // Dates the queue's doctor practises (today .. +7), minus its current date.
+  const rescheduleOptions = rescheduleQueue
+    ? visitDateOptions(
+        doctors.find((d) => String(d.id) === String(rescheduleQueue.doctor?.id))
+          ?.jadwalPraktik || [],
+      ).filter((o) => o.tanggal !== rescheduleQueue.tanggal.slice(0, 10))
+    : [];
+
+  const openReschedule = (q) => {
+    setRescheduleQueue(q);
+    setRescheduleValue("");
+  };
+
+  const submitReschedule = async (e) => {
+    e.preventDefault();
+    if (!rescheduleValue) return;
+    const [tanggal, jadwalId] = rescheduleValue.split("|");
+    try {
+      const res = await api(`/queues/${rescheduleQueue.id}/reschedule`, {
+        method: "PATCH",
+        body: JSON.stringify({ tanggal, jadwalId }),
+      });
+      setRescheduleQueue(null);
+      loadQueue();
+      setMessage(
+        `Antrean dipindahkan ke ${formatVisitDate(res.data.tanggal)}, nomor baru ${formatQueueNumber(res.data.doctorId, res.data.nomorAntrean)}.`,
+      );
+    } catch (err) {
+      setMessage(err?.message || "Gagal memindahkan tanggal antrean");
     }
   };
 
@@ -564,6 +606,12 @@ export default function PetugasDashboard() {
                               >
                                 Lewati
                               </button>
+                              <button
+                                className="btn-ubah-tanggal"
+                                onClick={() => openReschedule(q)}
+                              >
+                                Ubah tanggal
+                              </button>
                             </>
                           )}
                           {q.status === "SEDANG_DIPANGGIL" && (
@@ -654,6 +702,74 @@ export default function PetugasDashboard() {
             </div>
           )}
         </div>
+
+        {rescheduleQueue && (
+          <div
+            className="patient-modal-backdrop"
+            onClick={() => setRescheduleQueue(null)}
+          >
+            <div className="patient-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="patient-modal-header">
+                <h3>Ubah Tanggal Antrean</h3>
+                <button
+                  type="button"
+                  className="patient-modal-close"
+                  onClick={() => setRescheduleQueue(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <form className="patient-modal-body" onSubmit={submitReschedule}>
+                <div className="patient-modal-row">
+                  <span>Pasien</span>
+                  <strong>{rescheduleQueue.recordPasien?.nama || "-"}</strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Dokter</span>
+                  <strong>{rescheduleQueue.doctor?.nama || "-"}</strong>
+                </div>
+                <div className="patient-modal-row">
+                  <span>Tanggal sekarang</span>
+                  <strong>{formatVisitDate(rescheduleQueue.tanggal)}</strong>
+                </div>
+                <label className="reschedule-label" htmlFor="reschedule-date">
+                  Tanggal baru
+                </label>
+                <select
+                  id="reschedule-date"
+                  className="reschedule-select"
+                  value={rescheduleValue}
+                  onChange={(e) => setRescheduleValue(e.target.value)}
+                  required
+                >
+                  <option value="">
+                    {rescheduleOptions.length
+                      ? "Pilih tanggal baru"
+                      : "Dokter tidak praktik dalam 7 hari ke depan"}
+                  </option>
+                  {rescheduleOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="reschedule-note">
+                  Pasien mendapat nomor antrean baru pada tanggal tersebut
+                  {rescheduleQueue.sumber === "ONLINE"
+                    ? " dan menerima notifikasi."
+                    : "."}
+                </p>
+                <button
+                  type="submit"
+                  className="btn-panggil reschedule-submit"
+                  disabled={!rescheduleValue}
+                >
+                  Pindahkan
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
         {detailQueue && (
           <div

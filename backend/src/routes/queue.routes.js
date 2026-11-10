@@ -37,6 +37,13 @@ router.patch(
   authorize("PETUGAS", "SUPERADMIN"),
   queueController.arrival,
 );
+// Tabel 3.16: Petugas moves a waiting queue to another date.
+router.patch(
+  "/:id/reschedule",
+  authenticate,
+  authorize("PETUGAS", "SUPERADMIN"),
+  queueController.reschedule,
+);
 router.patch(
   "/:id/status",
   authenticate,

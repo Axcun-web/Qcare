@@ -131,6 +131,7 @@ dari login.
 | GET    | `/queues/patients`    | Pasien                 | Data pasien (diri sendiri / orang lain) yang tersimpan                                           |
 | GET    | `/queues/staff?date=` | Petugas, Admin         | Daftar antrean klinik pada satu tanggal                                                          |
 | PATCH  | `/queues/:id/arrival` | Petugas, Admin         | Catat kedatangan pasien online                                                                   |
+| PATCH  | `/queues/:id/reschedule` | Petugas, Admin | Pindahkan antrean MENUNGGU ke tanggal lain: `tanggal`, `jadwalId` opsional; nomor baru, pasien online dinotifikasi (Tabel 3.16) |
 | PATCH  | `/queues/:id/status`  | Pasien, Petugas, Admin | Ubah status; `alasan` wajib untuk `DILEWATI`. Aturan transisi: `backend/src/utils/queueRules.js` |
 
 ### Klinik, notifikasi, feedback
@@ -171,8 +172,8 @@ dari login.
 | PATCH  | `/admin/jadwal/:id`                    | Super Admin, Petugas | Ubah jadwal                                                                              |
 | DELETE | `/admin/jadwal/:id`                    | Super Admin, Petugas | Hapus jadwal (ditolak bila sudah ada riwayat antrean)                                    |
 | GET    | `/admin/users?q=&role=&status=&page=`  | Super Admin          | Daftar pengguna dengan pencarian, filter, dan halaman (20/hal)                           |
-| PATCH  | `/admin/users/:id`                     | Super Admin          | Ubah data pengguna                                                                       |
-| DELETE | `/admin/users/:id`                     | Super Admin          | Nonaktifkan pengguna                                                                     |
+| PATCH  | `/admin/users/:id`                     | Super Admin          | Ubah data pengguna. Menonaktifkan pengguna yang aktif dalam 5 menit terakhir → 409 `USER_ACTIVE_NOW`; ulangi dengan `?force=true` setelah konfirmasi (Tabel 3.19) |
+| DELETE | `/admin/users/:id`                     | Super Admin          | Nonaktifkan pengguna (akses langsung berakhir); peringatan `USER_ACTIVE_NOW` sama seperti di atas |
 | POST   | `/admin/users/:id/reset-password`      | Super Admin          | Reset password, mengembalikan password sementara (Tabel 3.19)                            |
 | GET    | `/admin/feedback`                      | Super Admin          | Semua feedback                                                                           |
 
@@ -212,5 +213,5 @@ memberikan password sementara.
       (15 detik)
 - [x] Ubah nama, ubah password, reset password oleh Super Admin
 - [x] Beranda Super Admin (statistik, klinik teramai, feedback terbaru)
-- [ ] Petugas mengubah tanggal antrean yang sudah ada (Tabel 3.16)
-- [ ] Peringatan saat menonaktifkan Petugas yang sedang login (Tabel 3.19)
+- [x] Petugas memindahkan tanggal antrean yang masih menunggu (Tabel 3.16)
+- [x] Akun nonaktif langsung kehilangan akses (status dicek setiap request) dan peringatan saat menonaktifkan pengguna yang sedang memakai aplikasi (Tabel 3.19)

@@ -202,33 +202,37 @@ async function liveQueueStatus(antrean) {
   }
   const [currentlyServing, peopleAhead, latestPrediction, jadwal] =
     await Promise.all([
-    prisma.antrean.findFirst({
-      where: {
-        jadwalId: antrean.jadwalId,
-        tanggal: antrean.tanggal,
-        status: { in: ["SEDANG_DILAYANI", "SEDANG_DIPANGGIL"] },
-      },
-      orderBy: { nomorAntrean: "desc" },
-      select: { nomorAntrean: true },
-    }),
-    prisma.antrean.count({
-      where: {
-        jadwalId: antrean.jadwalId,
-        tanggal: antrean.tanggal,
-        status: "MENUNGGU",
-        nomorAntrean: { lt: antrean.nomorAntrean },
-      },
-    }),
-    prisma.predictionHistory.findFirst({
-      where: { antreanId: antrean.id },
-      orderBy: { waktuPrediksi: "desc" },
-      select: { estimasiMenit: true, sumberEstimasi: true, waktuPrediksi: true },
-    }),
-    prisma.jadwalPraktikDokter.findUnique({
-      where: { id: antrean.jadwalId },
-      select: { jamMulai: true },
-    }),
-  ]);
+      prisma.antrean.findFirst({
+        where: {
+          jadwalId: antrean.jadwalId,
+          tanggal: antrean.tanggal,
+          status: { in: ["SEDANG_DILAYANI", "SEDANG_DIPANGGIL"] },
+        },
+        orderBy: { nomorAntrean: "desc" },
+        select: { nomorAntrean: true },
+      }),
+      prisma.antrean.count({
+        where: {
+          jadwalId: antrean.jadwalId,
+          tanggal: antrean.tanggal,
+          status: "MENUNGGU",
+          nomorAntrean: { lt: antrean.nomorAntrean },
+        },
+      }),
+      prisma.predictionHistory.findFirst({
+        where: { antreanId: antrean.id },
+        orderBy: { waktuPrediksi: "desc" },
+        select: {
+          estimasiMenit: true,
+          sumberEstimasi: true,
+          waktuPrediksi: true,
+        },
+      }),
+      prisma.jadwalPraktikDokter.findUnique({
+        where: { id: antrean.jadwalId },
+        select: { jamMulai: true },
+      }),
+    ]);
 
   let estimatedWaitTime = latestPrediction?.estimasiMenit;
   let sumberEstimasi = latestPrediction?.sumberEstimasi;
@@ -458,6 +462,118 @@ export const queueService = {
       sumber: "WALK_IN",
     });
   },
+  /**
+   * Tabel 3.16 (Petugas edits a queue): move a waiting queue to another
+   * date. Same rules as booking (date window, doctor practises that day,
+   * quota, no duplicate for the same patient, doctor and date); the queue
+   * gets the next number of the new day. Online patients are notified.
+   *
+   * @param {{ id: string, role: string }} user - PETUGAS or SUPERADMIN
+   * @param {string} queueId
+   * @param {{ tanggal: string, jadwalId?: string|number }} input
+   */
+  async reschedule(user, queueId, input) {
+    const entry = await prisma.antrean.findUnique({
+      where: { id: BigInt(queueId) },
+      include: { recordPasien: { select: { userId: true, nama: true } } },
+    });
+    if (!entry) throw ApiError.notFound("Antrean tidak ditemukan");
+    await assertStaffOwnsClinic(user, entry.clinicId);
+    if (entry.status !== "MENUNGGU")
+      throw ApiError.badRequest(
+        "Hanya antrean yang masih menunggu yang dapat dipindahkan tanggalnya",
+      );
+
+    if (!input?.tanggal) throw ApiError.badRequest("Tanggal baru wajib diisi");
+    const date = startOfDay(new Date(input.tanggal));
+    const dateError = bookingDateError(date, startOfDay());
+    if (dateError) throw ApiError.badRequest(dateError);
+    if (date.getTime() === entry.tanggal.getTime())
+      throw ApiError.badRequest(
+        "Tanggal baru sama dengan tanggal antrean saat ini",
+      );
+
+    const slots = await prisma.jadwalPraktikDokter.findMany({
+      where: {
+        doctorId: entry.doctorId,
+        hari: hariFromDate(date),
+        kuotaAntrean: { gt: 0 },
+        ...(input.jadwalId ? { id: BigInt(input.jadwalId) } : {}),
+      },
+    });
+    if (slots.length === 0)
+      throw ApiError.badRequest(
+        "Dokter tidak praktik pada tanggal yang dipilih",
+      );
+    if (slots.length > 1)
+      throw ApiError.badRequest(
+        "Dokter memiliki lebih dari satu jadwal pada hari itu; pilih jadwalnya",
+      );
+    const schedule = slots[0];
+
+    const updated = await prisma.$transaction(async (tx) => {
+      await lockDoctorQueue(tx, entry.doctorId);
+      const duplicate = await tx.antrean.findFirst({
+        where: {
+          id: { not: entry.id },
+          recordPasienId: entry.recordPasienId,
+          doctorId: entry.doctorId,
+          tanggal: date,
+          status: { in: ACTIVE_STATUSES },
+        },
+      });
+      if (duplicate)
+        throw ApiError.conflict(
+          "Pasien sudah memiliki antrean aktif untuk dokter ini pada tanggal tersebut",
+        );
+      const booked = await tx.antrean.count({
+        where: {
+          jadwalId: schedule.id,
+          tanggal: date,
+          status: { notIn: ["DIBATALKAN"] },
+        },
+      });
+      if (booked >= schedule.kuotaAntrean)
+        throw ApiError.conflict(
+          "Kuota antrean pada tanggal tersebut sudah penuh",
+        );
+      const nomorAntrean = await nextQueueNumber(tx, entry.doctorId, date);
+      const moved = await tx.antrean.update({
+        where: { id: entry.id },
+        data: {
+          tanggal: date,
+          jadwalId: schedule.id,
+          nomorAntrean,
+          // Arrival belongs to the visit day; record it again on the new day.
+          timestampKedatangan: null,
+        },
+        include: queueInclude,
+      });
+      if (entry.sumber === "ONLINE") {
+        const tanggalLabel = date.toLocaleDateString("id-ID", {
+          timeZone: "UTC",
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        await tx.notification.create({
+          data: {
+            userId: entry.recordPasien.userId,
+            antreanId: entry.id,
+            pesan: `Antrean Anda dipindahkan ke ${tanggalLabel}. Nomor antrean baru: ${formatQueueNumber(entry.doctorId, nomorAntrean)}.`,
+          },
+        });
+      }
+      return moved;
+    });
+
+    // Both sessions changed: the old one lost a patient, the new one gained one.
+    await refreshPredictions(entry);
+    await refreshPredictions(updated);
+    return updated;
+  },
+
   async mine(userId) {
     const queues = await prisma.antrean.findMany({
       where: { recordPasien: { userId: BigInt(userId) } },
