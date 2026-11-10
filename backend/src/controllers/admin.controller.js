@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { queueService } from "../services/queue.service.js";
 import { findOverlappingSlot } from "../utils/queueRules.js";
 import { generateTempPassword } from "../utils/tempPassword.js";
+import { parseUserListQuery } from "../utils/userListQuery.js";
 
 const clinicSelect = {
   id: true,
@@ -117,14 +118,59 @@ async function assertNoOverlappingSlot(doctorId, slot, ignoreId) {
 }
 
 export const adminController = {
+  /**
+   * Super Admin home (Gbr 3.83 skripsi): Total Klinik, Total Dokter, Total
+   * Petugas, "Klinik teramai" and the latest feedback. "Teramai" = most
+   * queues (not cancelled) in the last 30 days.
+   */
   overview: asyncHandler(async (_q, res) => {
-    const [patients, staff, clinics, queues] = await Promise.all([
-      prisma.user.count({ where: { role: "PASIEN" } }),
-      prisma.user.count({ where: { role: "PETUGAS" } }),
-      prisma.clinic.count(),
-      prisma.antrean.groupBy({ by: ["status"], _count: true }),
-    ]);
-    res.json({ success: true, data: { patients, staff, clinics, queues } });
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [clinics, doctors, staff, patients, busiest, latestFeedback] =
+      await Promise.all([
+        prisma.clinic.count(),
+        prisma.doctor.count({ where: { isActive: true } }),
+        prisma.user.count({ where: { role: "PETUGAS", isActive: true } }),
+        prisma.user.count({ where: { role: "PASIEN", isActive: true } }),
+        prisma.antrean.groupBy({
+          by: ["clinicId"],
+          where: { tanggal: { gte: since }, status: { not: "DIBATALKAN" } },
+          _count: { _all: true },
+          orderBy: { _count: { clinicId: "desc" } },
+          take: 1,
+        }),
+        prisma.feedback.findMany({
+          orderBy: { tanggalKirim: "desc" },
+          take: 5,
+          select: {
+            id: true,
+            rating: true,
+            isi: true,
+            tanggalKirim: true,
+            user: { select: { nama: true } },
+          },
+        }),
+      ]);
+    const top = busiest[0];
+    const busiestClinic = top
+      ? {
+          ...(await prisma.clinic.findUnique({
+            where: { id: top.clinicId },
+            select: { id: true, nama: true },
+          })),
+          antrean30Hari: top._count._all,
+        }
+      : null;
+    res.json({
+      success: true,
+      data: {
+        totalKlinik: clinics,
+        totalDokter: doctors,
+        totalPetugas: staff,
+        totalPasien: patients,
+        klinikTeramai: busiestClinic,
+        feedbackTerbaru: latestFeedback,
+      },
+    });
   }),
   clinics: asyncHandler(async (_q, res) =>
     res.json({
@@ -320,15 +366,31 @@ export const adminController = {
     });
   }),
 
-  users: asyncHandler(async (_q, res) =>
-    res.json({
-      success: true,
-      data: await prisma.user.findMany({
+  // Users tab: ?q=&role=&status=active|inactive&page=&pageSize=
+  // data stays an array; meta carries the paging totals.
+  users: asyncHandler(async (req, res) => {
+    const { where, skip, take, page, pageSize } = parseUserListQuery(req.query);
+    const [items, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
         select: publicUser,
         orderBy: { createdAt: "desc" },
+        skip,
+        take,
       }),
-    }),
-  ),
+      prisma.user.count({ where }),
+    ]);
+    res.json({
+      success: true,
+      data: items,
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      },
+    });
+  }),
 
   updateUser: asyncHandler(async (req, res) => {
     const { nama, email, noHp, isActive, clinicId } = req.body,
