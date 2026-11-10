@@ -4,6 +4,7 @@ import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 import { queueService } from "../services/queue.service.js";
 import { findOverlappingSlot } from "../utils/queueRules.js";
+import { generateTempPassword } from "../utils/tempPassword.js";
 
 const clinicSelect = {
   id: true,
@@ -358,6 +359,43 @@ export const adminController = {
   // auth.service.js already blocks login for inactive accounts, so this
   // alone is enough to revoke access without losing history (feedback,
   // antrean, etc. that reference this user).
+  /**
+   * Tabel 3.19 "mereset password". Also the thesis's answer to a forgotten
+   * password (there is no Lupa Password use case): the admin sets a random
+   * temporary password, shown once, and the user changes it via Ubah
+   * Password. The admin cannot reset their own account here.
+   */
+  resetUserPassword: asyncHandler(async (req, res) => {
+    const id = BigInt(req.params.id);
+    if (id === BigInt(req.user.id))
+      throw ApiError.badRequest(
+        "Gunakan menu Ubah Password untuk mengganti password Anda sendiri",
+      );
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, nama: true },
+    });
+    if (!target) throw ApiError.notFound("Pengguna tidak ditemukan");
+
+    const temporaryPassword = generateTempPassword();
+    const password = await bcrypt.hash(temporaryPassword, 10);
+    await prisma.$transaction([
+      prisma.user.update({ where: { id }, data: { password } }),
+      prisma.notification.create({
+        data: {
+          userId: id,
+          pesan:
+            "Password Anda telah direset oleh admin. Segera ganti password melalui menu Pengaturan > Ubah Kata Sandi.",
+        },
+      }),
+    ]);
+    res.json({
+      success: true,
+      message: `Password ${target.nama} berhasil direset`,
+      data: { temporaryPassword },
+    });
+  }),
+
   deleteUser: asyncHandler(async (req, res) => {
     const user = await prisma.user.update({
       where: { id: BigInt(req.params.id) },

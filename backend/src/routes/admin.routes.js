@@ -21,6 +21,7 @@ router.post("/clinics/:id/doctors", adminController.createDoctor);
 router.post("/clinics/:id/staff", adminController.createStaff);
 router.get("/users", adminController.users);
 router.patch("/users/:id", adminController.updateUser);
+router.post("/users/:id/reset-password", adminController.resetUserPassword);
 router.get("/feedback", adminController.feedback);
 router.get("/doctors", adminController.doctors);
 router.patch("/doctors/:id", adminController.updateDoctor);

@@ -1,73 +1,41 @@
 import "./ForgotPassword.css";
 import { Link } from "react-router-dom";
-import { useState } from "react";
 
+/**
+ * The thesis has no self-service password reset (no Lupa Password use case);
+ * the Super Admin resets passwords (Tabel 3.19). This page tells the user how
+ * to get a temporary password instead of pretending to send a reset link.
+ */
 function ForgotPassword() {
-    const [email, setEmail] = useState("");
-    const [emailError, setEmailError] = useState("");
-
-    const handleReset = (e) => {
-        e.preventDefault();
-
-        if (!email.endsWith("@gmail.com")) {
-            setEmailError("Gunakan @gmail.com");
-            return;
-        }
-
-        setEmailError("");
-        console.log("Data siap dikirim ke backend:", { email });
-    };
-
-    const handleEmailChange = (e) => {
-        setEmail(e.target.value);
-        if (emailError) {
-            setEmailError("");
-        }
-    };
-
-    return (
-        <div className="forgot-page">
-            <div className="forgot-card">
-                <div className="logo-section">
-                    <h1>Qcare</h1>
-                    <p>Queue Management System</p>
-                </div>
-                
-                <form className="form-section" onSubmit={handleReset} noValidate>
-                    <h2>Lupa Password</h2>
-                    <p className="description">
-                        Jangan khawatir. Masukkan email yang terdaftar dan kami akan mengirimkan tautan untuk mengatur ulang password Anda.
-                    </p>
-                    
-                    <div className="input-group">
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-                            <label style={{ marginBottom: "0" }}>Email</label>
-                            {emailError && (
-                                <span className="email-error-message">*{emailError}</span>
-                            )}
-                        </div>
-                        <input
-                            type="email"
-                            placeholder="Masukkan email"
-                            value={email}
-                            onChange={handleEmailChange}
-                            required
-                        />
-                    </div>
-                    
-                    <button type="submit" className="send-btn">
-                        Kirim Link Reset
-                    </button>
-                    
-                    <div className="back-login">
-                        <Link to="/login">
-                            ← Kembali ke Login
-                        </Link>
-                    </div>
-                </form>
-            </div>
+  return (
+    <div className="forgot-page">
+      <div className="forgot-card">
+        <div className="logo-section">
+          <h1>Qcare</h1>
+          <p>Queue Management System</p>
         </div>
-    );
+
+        <div className="form-section">
+          <h2>Lupa Password</h2>
+          <p className="description">
+            Untuk mengatur ulang password, hubungi petugas atau admin klinik
+            Anda. Admin akan memberikan password sementara.
+          </p>
+          <ol className="forgot-steps">
+            <li>Sampaikan email akun Anda kepada petugas atau admin klinik.</li>
+            <li>Login memakai password sementara dari admin.</li>
+            <li>
+              Segera ganti password melalui Pengaturan &gt; Ubah Kata Sandi.
+            </li>
+          </ol>
+
+          <Link to="/login" className="send-btn forgot-back-btn">
+            Kembali ke Login
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default ForgotPassword;

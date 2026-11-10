@@ -28,7 +28,9 @@ export default function AdminDashboard() {
     [feedbackFilter, setFeedbackFilter] = useState("ALL"),
     [feedbackPage, setFeedbackPage] = useState(1),
     [scheduleOpenId, setScheduleOpenId] = useState(null),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    // { nama, password } after an admin password reset, shown once.
+    [resetResult, setResetResult] = useState(null);
 
   const handleLogout = () => {
     if (!confirmLogout()) return;
@@ -216,6 +218,33 @@ export default function AdminDashboard() {
       setMessage("Data pengguna diperbarui.");
     } catch (err) {
       setMessage(err.message);
+    }
+  };
+
+  // Tabel 3.19 "mereset password": the temporary password is shown once.
+  const resetPassword = async (item) => {
+    if (
+      !window.confirm(
+        `Reset password ${item.nama}? Password lama tidak dapat dipakai lagi.`,
+      )
+    )
+      return;
+    try {
+      const res = await api(`/admin/users/${item.id}/reset-password`, {
+        method: "POST",
+      });
+      setResetResult({ nama: item.nama, password: res.data.temporaryPassword });
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  const copyResetPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(resetResult.password);
+      setMessage("Password sementara disalin.");
+    } catch {
+      setMessage("Salin manual: clipboard tidak dapat diakses.");
     }
   };
 
@@ -505,7 +534,18 @@ export default function AdminDashboard() {
                     defaultChecked={item.isActive}
                   />
                 </label>
-                <button>Simpan</button>
+                <div className="edit-user-actions">
+                  <button>Simpan</button>
+                  {item.id !== user?.id && (
+                    <button
+                      type="button"
+                      className="reset-password"
+                      onClick={() => resetPassword(item)}
+                    >
+                      Reset password
+                    </button>
+                  )}
+                </div>
               </form>
             ))}
           </section>
@@ -605,6 +645,35 @@ export default function AdminDashboard() {
                 </label>
               ))}
               <button className="save">Simpan klinik</button>
+            </form>
+          </div>
+        )}
+
+        {resetResult && (
+          <div className="admin-modal">
+            <form onSubmit={(e) => e.preventDefault()}>
+              <button type="button" onClick={() => setResetResult(null)}>
+                ×
+              </button>
+              <h2>Password direset</h2>
+              <p className="reset-note">
+                Berikan password sementara ini kepada {resetResult.nama}.
+                Password hanya ditampilkan sekali. Minta pengguna segera
+                menggantinya melalui Pengaturan &gt; Ubah Kata Sandi.
+              </p>
+              <code className="temp-password">{resetResult.password}</code>
+              <div className="reset-actions">
+                <button type="button" className="save" onClick={copyResetPassword}>
+                  Salin password
+                </button>
+                <button
+                  type="button"
+                  className="save secondary"
+                  onClick={() => setResetResult(null)}
+                >
+                  Selesai
+                </button>
+              </div>
             </form>
           </div>
         )}
