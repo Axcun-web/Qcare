@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../lib/api";
+import { api, withActiveUserConfirm } from "../../lib/api";
 import DoctorSchedule from "../../components/DoctorSchedule";
 import NotificationBell from "../../components/NotificationBell";
 import { confirmLogout } from "../../lib/confirmLogout";
@@ -231,7 +231,11 @@ export default function AdminDashboard() {
           body: JSON.stringify({ isActive: true }),
         });
       } else {
-        await api(`/admin/users/${staff.id}`, { method: "DELETE" });
+        // Tabel 3.19 exc. 3: confirm again if this Petugas is online now.
+        const done = await withActiveUserConfirm((query) =>
+          api(`/admin/users/${staff.id}${query}`, { method: "DELETE" }),
+        );
+        if (done === null) return;
       }
       await refreshDetail();
       load();
@@ -259,10 +263,15 @@ export default function AdminDashboard() {
     try {
       const data = Object.fromEntries(new FormData(e.currentTarget));
       data.isActive = e.currentTarget.elements.isActive.checked;
-      await api(`/admin/users/${item.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
+      // Unticking "Aktif" for someone online now asks for confirmation
+      // (Tabel 3.19 exc. 3).
+      const done = await withActiveUserConfirm((query) =>
+        api(`/admin/users/${item.id}${query}`, {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        }),
+      );
+      if (done === null) return;
       loadUsers();
       setMessage("Data pengguna diperbarui.");
     } catch (err) {

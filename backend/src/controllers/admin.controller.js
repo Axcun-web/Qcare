@@ -6,6 +6,7 @@ import { queueService } from "../services/queue.service.js";
 import { findOverlappingSlot } from "../utils/queueRules.js";
 import { generateTempPassword } from "../utils/tempPassword.js";
 import { parseUserListQuery } from "../utils/userListQuery.js";
+import { isRecentlyActive } from "../utils/presence.js";
 
 const clinicSelect = {
   id: true,
@@ -115,6 +116,37 @@ async function assertNoOverlappingSlot(doctorId, slot, ignoreId) {
     throw ApiError.conflict(
       "Jadwal bentrok dengan jadwal lain dokter ini pada hari yang sama",
     );
+}
+
+/** Loads the account to deactivate; refuses the admin's own account. */
+async function findUserForDeactivation(req) {
+  const target = await prisma.user.findUnique({
+    where: { id: BigInt(req.params.id) },
+    select: { id: true, nama: true, lastSeenAt: true },
+  });
+  if (!target) throw ApiError.notFound("Pengguna tidak ditemukan");
+  if (target.id === BigInt(req.user.id))
+    throw ApiError.badRequest(
+      "Anda tidak dapat menonaktifkan akun Anda sendiri",
+    );
+  return target;
+}
+
+/**
+ * Tabel 3.19 exc. 3: warn before deactivating someone who is using the app
+ * right now (seen within the last 5 minutes). The client confirms and
+ * repeats the request with ?force=true. details.code lets it recognise the
+ * case.
+ *
+ * @param {{ nama: string, lastSeenAt: Date | null }} user
+ * @param {boolean} force
+ */
+async function assertNotUsingAppNow(user, force) {
+  if (force || !isRecentlyActive(user.lastSeenAt)) return;
+  throw ApiError.conflict(
+    `${user.nama} sedang menggunakan aplikasi (aktif dalam 5 menit terakhir). Akses akan langsung berakhir jika dinonaktifkan.`,
+    { code: "USER_ACTIVE_NOW", lastSeenAt: user.lastSeenAt },
+  );
 }
 
 export const adminController = {
@@ -398,6 +430,13 @@ export const adminController = {
         where: { id: BigInt(req.params.id) },
       });
     if (!existing) throw ApiError.notFound("Pengguna tidak ditemukan");
+    if (isActive === false && existing.isActive) {
+      if (existing.id === BigInt(req.user.id))
+        throw ApiError.badRequest(
+          "Anda tidak dapat menonaktifkan akun Anda sendiri",
+        );
+      await assertNotUsingAppNow(existing, req.query.force === "true");
+    }
     const data = {
       ...(nama ? { nama } : {}),
       ...(email ? { email: email.toLowerCase() } : {}),
@@ -417,10 +456,6 @@ export const adminController = {
     });
   }),
 
-  // Soft delete: sets isActive: false rather than removing the row.
-  // auth.service.js already blocks login for inactive accounts, so this
-  // alone is enough to revoke access without losing history (feedback,
-  // antrean, etc. that reference this user).
   /**
    * Tabel 3.19 "mereset password". Also the thesis's answer to a forgotten
    * password (there is no Lupa Password use case): the admin sets a random
@@ -458,9 +493,14 @@ export const adminController = {
     });
   }),
 
+  // Soft delete: sets isActive: false rather than removing the row, so
+  // history (feedback, antrean, ...) stays intact. Access ends immediately:
+  // the authenticate middleware rejects inactive accounts on every request.
   deleteUser: asyncHandler(async (req, res) => {
+    const target = await findUserForDeactivation(req);
+    await assertNotUsingAppNow(target, req.query.force === "true");
     const user = await prisma.user.update({
-      where: { id: BigInt(req.params.id) },
+      where: { id: target.id },
       data: { isActive: false },
       select: publicUser,
     });

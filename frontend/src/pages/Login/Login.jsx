@@ -1,5 +1,5 @@
 import "./Login.css";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { api, firstErrorMessage } from "../../lib/api";
@@ -13,7 +13,14 @@ function Login() {
 
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [serverError, setServerError] = useState("");
+  // Set by lib/api.js when the session ended (token expired or the account
+  // was deactivated by the admin).
+  const [searchParams] = useSearchParams();
+  const [serverError, setServerError] = useState(
+    searchParams.get("sesi") === "berakhir"
+      ? "Sesi Anda telah berakhir atau akun dinonaktifkan. Silakan login kembali."
+      : "",
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
