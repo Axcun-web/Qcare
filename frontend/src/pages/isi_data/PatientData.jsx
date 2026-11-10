@@ -217,7 +217,7 @@ const PatientData = () => {
       });
 
       if (response.success) {
-        navigate("/patient");
+        navigate("/patient", { state: { justBooked: true } });
       }
     } catch (err) {
       console.error("Failed to submit queue:", err);

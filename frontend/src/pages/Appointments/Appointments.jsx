@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { formatQueueNumber } from "../../lib/queueNumber";
-import { formatVisitDate } from "../../lib/visitDates";
+import { formatCallTime, formatVisitDate } from "../../lib/visitDates";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./Appointments.css";
 
@@ -135,6 +135,11 @@ const Appointments = () => {
                               ? "Tersedia pada hari kunjungan"
                               : `~${activeQueue.estimatedWaitTime} Menit`}
                           </strong>
+                          {!activeQueue.isFutureVisit && activeQueue.estimatedCallTime && (
+                            <p className="call-time">
+                              Perkiraan dipanggil {formatCallTime(activeQueue.estimatedCallTime)}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="current-queue">
@@ -227,10 +232,6 @@ const Appointments = () => {
       <footer className="dashboard-footer">
         <div className="footer-links">
           <strong>QCare</strong>
-          <Link to="#">Kebijakan Privasi</Link>
-          <Link to="#">Syarat dan Ketentuan</Link>
-          <Link to="#">Hubungi Bantuan</Link>
-          <Link to="#">Info Darurat</Link>
         </div>
         <div className="footer-copyright">
           © 2026 Manajemen Klinik QCare. Modernisme Klinis untuk Kesehatan.

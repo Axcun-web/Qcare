@@ -189,10 +189,6 @@ const History = () => {
       <footer className="dashboard-footer">
         <div className="footer-links">
           <strong>QCare</strong>
-          <Link to="#">Kebijakan Privasi</Link>
-          <Link to="#">Syarat dan Ketentuan</Link>
-          <Link to="#">Hubungi Bantuan</Link>
-          <Link to="#">Info Darurat</Link>
         </div>
         <div className="footer-copyright">
           © 2026 Manajemen Klinik QCare. Modernisme Klinis untuk Kesehatan.

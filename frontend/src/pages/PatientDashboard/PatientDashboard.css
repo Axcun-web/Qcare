@@ -695,3 +695,118 @@
   font-weight: 600;
   color: #1e6b3a;
 }
+
+/* ---- Phase 3: home page per Gbr 3.72 ---- */
+.booking-confirmation {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: #e8f5ec;
+  color: #1e6b3a;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.queue-card .stat-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #26734d;
+}
+
+.clinic-info-card {
+  grid-column: 3 / 4;
+  background: #26734d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.clinic-info-card .clinic-info-label {
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: #bfe3cc;
+}
+.clinic-info-card h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+.clinic-info-card p {
+  margin: 0;
+  color: #e3f2e8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.clinic-info-card dl {
+  margin: 8px 0 0;
+  display: grid;
+  gap: 2px;
+}
+.clinic-info-card dt {
+  font-size: 0.75rem;
+  color: #bfe3cc;
+  margin-top: 8px;
+}
+.clinic-info-card dd {
+  margin: 0;
+  font-weight: 600;
+}
+.clinic-info-card .info-btn {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.clinic-list-card {
+  grid-column: 2 / 4;
+}
+.clinic-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+.clinic-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f0;
+}
+.clinic-list li > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.clinic-list li span {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+.clinic-list-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+.clinic-list-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #26734d;
+  text-decoration: none;
+}
+
+/* Same breakpoint as the grid switching to 2 columns above. */
+@media (max-width: 1024px) {
+  .clinic-info-card {
+    grid-column: 1 / -1;
+  }
+  .clinic-list-card {
+    grid-column: span 1;
+  }
+}
+@media (max-width: 768px) {
+  .clinic-list-card,
+  .history-card {
+    grid-column: 1 / -1;
+  }
+}

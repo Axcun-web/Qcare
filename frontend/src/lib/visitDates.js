@@ -79,3 +79,34 @@ export const formatVisitDate = (tanggal) =>
     month: "long",
     year: "numeric",
   });
+
+/**
+ * Estimated call time as clinic-local clock time, e.g. "± 17.25 WIB".
+ *
+ * @param {string | null} iso - estimatedCallTime from the API
+ */
+export const formatCallTime = (iso) =>
+  iso
+    ? `± ${new Date(iso).toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })} WIB`
+    : "-";
+
+/**
+ * Greeting by clinic-local hour: Pagi until 11, Siang until 15, Sore until
+ * 18, then Malam.
+ *
+ * @param {Date} [now]
+ */
+export function greeting(now = new Date()) {
+  const hour = Number(
+    now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour: "numeric", hour12: false }),
+  ) % 24;
+  if (hour >= 4 && hour < 11) return "Selamat Pagi";
+  if (hour >= 11 && hour < 15) return "Selamat Siang";
+  if (hour >= 15 && hour < 18) return "Selamat Sore";
+  return "Selamat Malam";
+}

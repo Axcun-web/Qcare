@@ -12,6 +12,7 @@ import {
 } from "../utils/queueNumber.js";
 import {
   bookingDateError,
+  estimateCallTime,
   isFutureVisit,
   transitionError,
 } from "../utils/queueRules.js";
@@ -194,11 +195,13 @@ async function liveQueueStatus(antrean) {
       currentQueueNumber: "-",
       peopleAhead: null,
       estimatedWaitTime: null,
+      estimatedCallTime: null,
       sumberEstimasi: null,
       isFutureVisit: true,
     };
   }
-  const [currentlyServing, peopleAhead, latestPrediction] = await Promise.all([
+  const [currentlyServing, peopleAhead, latestPrediction, jadwal] =
+    await Promise.all([
     prisma.antrean.findFirst({
       where: {
         jadwalId: antrean.jadwalId,
@@ -219,7 +222,11 @@ async function liveQueueStatus(antrean) {
     prisma.predictionHistory.findFirst({
       where: { antreanId: antrean.id },
       orderBy: { waktuPrediksi: "desc" },
-      select: { estimasiMenit: true, sumberEstimasi: true },
+      select: { estimasiMenit: true, sumberEstimasi: true, waktuPrediksi: true },
+    }),
+    prisma.jadwalPraktikDokter.findUnique({
+      where: { id: antrean.jadwalId },
+      select: { jamMulai: true },
     }),
   ]);
 
@@ -237,10 +244,23 @@ async function liveQueueStatus(antrean) {
     sumberEstimasi = hasHistory ? "HISTORICAL_AVG" : "DEFAULT";
   }
 
+  // "Estimasi jam dipanggil" (Bab 1 §1.3). A stored prediction's minutes
+  // count from when it was made; the fallback counts from now.
+  const estimatedCallTime =
+    estimatedWaitTime == null || !jadwal
+      ? null
+      : estimateCallTime({
+          now: latestPrediction?.waktuPrediksi ?? new Date(),
+          visitDate: antrean.tanggal,
+          sessionStart: jadwal.jamMulai,
+          waitMinutes: estimatedWaitTime,
+        });
+
   return {
     currentQueueNumber: currentlyServing?.nomorAntrean ?? "-",
     peopleAhead,
     estimatedWaitTime,
+    estimatedCallTime,
     sumberEstimasi,
     isFutureVisit: false,
   };
@@ -679,6 +699,10 @@ export const queueService = {
         pasienNama: activeAntrean.recordPasien.nama,
         clinicNama: activeAntrean.clinic.nama,
         clinicAlamat: activeAntrean.clinic.alamat,
+        // Gbr 3.72: clinic information on the home page.
+        clinicJamOperasional: activeAntrean.clinic.jamOperasional,
+        clinicJenisLayanan: activeAntrean.clinic.jenisLayanan,
+        clinicNoTelp: activeAntrean.clinic.noTelp,
         doctorNama: activeAntrean.doctor.nama,
         doctorSpesialisasi: activeAntrean.doctor.spesialisasi,
         ...(await liveQueueStatus(activeAntrean)),

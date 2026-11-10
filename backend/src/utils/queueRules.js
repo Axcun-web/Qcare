@@ -108,3 +108,23 @@ export function findOverlappingSlot(slot, existing, ignoreId) {
     ) ?? null
   );
 }
+
+// WIB = UTC+7, no DST: practice hours are local clinic time.
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+/**
+ * Estimated clock time the patient is called ("estimasi jam dipanggil",
+ * Bab 1 §1.3): the wait estimate counted from now, or from the session start
+ * when the session has not begun yet.
+ *
+ * @param {{ now: Date, visitDate: Date, sessionStart: Date, waitMinutes: number }} input
+ *   visitDate: UTC midnight of the local visit date (startOfDay);
+ *   sessionStart: the slot's jamMulai (TIME column, 1970-01-01 UTC)
+ * @returns {Date}
+ */
+export function estimateCallTime({ now, visitDate, sessionStart, waitMinutes }) {
+  const sessionStartAt =
+    visitDate.getTime() + minuteOfTime(sessionStart) * 60_000 - WIB_OFFSET_MS;
+  const base = Math.max(now.getTime(), sessionStartAt);
+  return new Date(base + waitMinutes * 60_000);
+}

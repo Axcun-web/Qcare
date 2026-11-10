@@ -5,6 +5,7 @@ import {
   bookingDateError,
   isFutureVisit,
   findOverlappingSlot,
+  estimateCallTime,
   BOOKING_DAYS_AHEAD,
 } from "./queueRules.js";
 
@@ -141,5 +142,22 @@ describe("findOverlappingSlot", () => {
       findOverlappingSlot(slot("SENIN", "09:00", "13:00"), existing, 1n),
       null,
     );
+  });
+});
+
+describe("estimateCallTime", () => {
+  const visitDate = day("2026-11-10");
+  const sessionStart = time("16:00"); // 16:00 WIB = 09:00 UTC
+
+  test("counts from now when the session is running", () => {
+    const now = new Date("2026-11-10T10:00:00.000Z"); // 17:00 WIB
+    const call = estimateCallTime({ now, visitDate, sessionStart, waitMinutes: 25 });
+    assert.equal(call.toISOString(), "2026-11-10T10:25:00.000Z"); // 17:25 WIB
+  });
+
+  test("counts from the session start before it begins", () => {
+    const now = new Date("2026-11-10T06:00:00.000Z"); // 13:00 WIB
+    const call = estimateCallTime({ now, visitDate, sessionStart, waitMinutes: 30 });
+    assert.equal(call.toISOString(), "2026-11-10T09:30:00.000Z"); // 16:30 WIB
   });
 });

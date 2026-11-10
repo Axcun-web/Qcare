@@ -675,3 +675,10 @@
   font-weight: 600;
   color: #1e6b3a;
 }
+
+.waiting-information .call-time {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #26734d;
+}
