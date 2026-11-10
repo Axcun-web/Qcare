@@ -110,3 +110,10 @@ export function greeting(now = new Date()) {
   if (hour >= 15 && hour < 18) return "Selamat Sore";
   return "Selamat Malam";
 }
+
+/**
+ * How often the patient's queue status refreshes while a same-day queue is
+ * active (Tabel 3.9 step 5: "menunggu pembaruan otomatis"). Shorter than the
+ * 30 s notification poll so the status page feels live.
+ */
+export const QUEUE_REFRESH_MS = 15_000;

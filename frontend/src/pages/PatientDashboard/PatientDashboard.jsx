@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { formatQueueNumber } from "../../lib/queueNumber";
 import {
+  QUEUE_REFRESH_MS,
   formatCallTime,
   formatVisitDate,
   greeting,
@@ -26,22 +27,36 @@ const PatientDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setLoading(true);
-        const response = await api("/queues/dashboard");
-        if (response.success) {
-          setDashboardData(response.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch patient dashboard data:", err);
-        setError("Gagal memuat data antrean. Silakan coba lagi.");
-      } finally {
-        setLoading(false);
+  // silent: background refresh, keep the current view instead of "loading".
+  const fetchDashboard = async ({ silent = false } = {}) => {
+    try {
+      if (!silent) setLoading(true);
+      const response = await api("/queues/dashboard");
+      if (response.success) {
+        setDashboardData(response.data);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch patient dashboard data:", err);
+      if (!silent) setError("Gagal memuat data antrean. Silakan coba lagi.");
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
 
+  // Auto-refresh while a queue runs today (Tabel 3.9 step 5).
+  const hasLiveQueue = Boolean(
+    dashboardData?.activeQueue && !dashboardData.activeQueue.isFutureVisit,
+  );
+  useEffect(() => {
+    if (!hasLiveQueue) return undefined;
+    const interval = setInterval(
+      () => fetchDashboard({ silent: true }),
+      QUEUE_REFRESH_MS,
+    );
+    return () => clearInterval(interval);
+  }, [hasLiveQueue]);
+
+  useEffect(() => {
     fetchDashboard();
     // Gbr 3.72: clinic information (jam operasional, jenis layanan).
     api("/clinics")

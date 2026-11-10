@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { formatQueueNumber } from "../../lib/queueNumber";
-import { formatCallTime, formatVisitDate } from "../../lib/visitDates";
+import {
+  QUEUE_REFRESH_MS,
+  formatCallTime,
+  formatVisitDate,
+} from "../../lib/visitDates";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./Appointments.css";
 
@@ -17,9 +21,21 @@ const Appointments = () => {
     fetchActiveQueues();
   }, []);
 
-  const fetchActiveQueues = async () => {
+  // Auto-refresh while a queue runs today; future visits have nothing live.
+  const hasLiveQueue = activeQueues.some((q) => !q.isFutureVisit);
+  useEffect(() => {
+    if (!hasLiveQueue) return undefined;
+    const interval = setInterval(
+      () => fetchActiveQueues({ silent: true }),
+      QUEUE_REFRESH_MS,
+    );
+    return () => clearInterval(interval);
+  }, [hasLiveQueue]);
+
+  // silent: background refresh, keep the current view instead of "loading".
+  const fetchActiveQueues = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await api("/queues/mine");
       if (response.success) {
         const allQueues = response.data || [];
@@ -38,9 +54,9 @@ const Appointments = () => {
       }
     } catch (err) {
       console.error("Failed to load appointments:", err);
-      setError("Gagal memuat data janji temu.");
+      if (!silent) setError("Gagal memuat data janji temu.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

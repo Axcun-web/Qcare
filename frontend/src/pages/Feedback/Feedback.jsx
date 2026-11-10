@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../lib/api";
+import { api, firstErrorMessage } from "../../lib/api";
 import "./Feedback.css";
+
+// Same rule as backend/src/validators/feedback.validator.js (Tabel 3.11).
+const FEEDBACK_MIN_LENGTH = 10;
 
 const Feedback = () => {
   const navigate = useNavigate();
@@ -18,7 +21,11 @@ const Feedback = () => {
       setErrorMsg("Harap isi rating dan masukan.");
       return;
     }
-    
+    if (feedbackText.trim().length < FEEDBACK_MIN_LENGTH) {
+      setErrorMsg(`Masukan minimal ${FEEDBACK_MIN_LENGTH} karakter.`);
+      return;
+    }
+
     setIsLoading(true);
     setErrorMsg("");
 
@@ -30,7 +37,7 @@ const Feedback = () => {
       setIsSubmitted(true);
     } catch (error) {
       console.error("Failed to submit feedback:", error);
-      setErrorMsg(error.message || "Gagal mengirim feedback, silakan coba lagi.");
+      setErrorMsg(firstErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +48,8 @@ const Feedback = () => {
       <div className="feedback-card">
         {/* TOMBOL BACK */}
         <div className="feedback-topbar">
-          <button 
-            className="back-button" 
+          <button
+            className="back-button"
             onClick={() => navigate("/settings")}
             aria-label="Kembali ke Pengaturan"
           >
@@ -89,7 +96,14 @@ const Feedback = () => {
               />
             </div>
 
-            {errorMsg && <p className="error-message" style={{color: 'red', marginBottom: '1rem'}}>{errorMsg}</p>}
+            {errorMsg && (
+              <p
+                className="error-message"
+                style={{ color: "red", marginBottom: "1rem" }}
+              >
+                {errorMsg}
+              </p>
+            )}
 
             <button type="submit" className="btn-submit" disabled={isLoading}>
               {isLoading ? "Mengirim..." : "Kirim Masukan"}
@@ -99,9 +113,12 @@ const Feedback = () => {
           <div className="success-box">
             <div className="success-icon">✓</div>
             <h2>Terima kasih untuk masukannya!</h2>
-            <p>Masukan Anda sangat berharga untuk pengembangan layanan QCare ke depannya.</p>
-            <button 
-              className="btn-submit" 
+            <p>
+              Masukan Anda sangat berharga untuk pengembangan layanan QCare ke
+              depannya.
+            </p>
+            <button
+              className="btn-submit"
               onClick={() => navigate("/settings")}
             >
               Kembali ke Pengaturan
