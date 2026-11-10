@@ -67,6 +67,33 @@ const jadwalData = (b) => {
   };
 };
 
+/**
+ * The jadwal routes are open to PETUGAS as well as SUPERADMIN. A Petugas may
+ * only manage doctors of their own clinic; Super Admin may manage any.
+ *
+ * @param {{ id: string, role: string }} user - req.user
+ * @param {bigint} doctorClinicId
+ */
+async function assertCanManageClinic(user, doctorClinicId) {
+  if (user.role !== "PETUGAS") return;
+  const staff = await prisma.user.findUnique({
+    where: { id: BigInt(user.id) },
+    select: { clinicId: true },
+  });
+  if (!staff?.clinicId || staff.clinicId !== doctorClinicId)
+    throw ApiError.forbidden("Dokter bukan bagian dari klinik Anda");
+}
+
+/** Loads a jadwal with its doctor's clinic, or throws 404. */
+async function findJadwalWithClinic(id) {
+  const jadwal = await prisma.jadwalPraktikDokter.findUnique({
+    where: { id },
+    include: { doctor: { select: { clinicId: true } } },
+  });
+  if (!jadwal) throw ApiError.notFound("Jadwal tidak ditemukan");
+  return jadwal;
+}
+
 export const adminController = {
   overview: asyncHandler(async (_q, res) => {
     const [patients, staff, clinics, queues] = await Promise.all([
@@ -200,6 +227,7 @@ export const adminController = {
       where: { id: BigInt(req.params.id) },
     });
     if (!doctor) throw ApiError.notFound("Dokter tidak ditemukan");
+    await assertCanManageClinic(req.user, doctor.clinicId);
     res.status(201).json({
       success: true,
       data: await prisma.jadwalPraktikDokter.create({
@@ -208,18 +236,22 @@ export const adminController = {
     });
   }),
 
-  updateJadwal: asyncHandler(async (req, res) =>
+  updateJadwal: asyncHandler(async (req, res) => {
+    const jadwal = await findJadwalWithClinic(BigInt(req.params.id));
+    await assertCanManageClinic(req.user, jadwal.doctor.clinicId);
     res.json({
       success: true,
       data: await prisma.jadwalPraktikDokter.update({
-        where: { id: BigInt(req.params.id) },
+        where: { id: jadwal.id },
         data: jadwalData(req.body),
       }),
-    }),
-  ),
+    });
+  }),
 
   deleteJadwal: asyncHandler(async (req, res) => {
     const id = BigInt(req.params.id);
+    const jadwal = await findJadwalWithClinic(id);
+    await assertCanManageClinic(req.user, jadwal.doctor.clinicId);
     if (await prisma.antrean.count({ where: { jadwalId: id } }))
       throw ApiError.conflict(
         "Jadwal tidak dapat dihapus karena sudah memiliki riwayat antrean",

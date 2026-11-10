@@ -459,6 +459,14 @@ export const queueService = {
       },
     });
     if (!entry) throw ApiError.notFound("Antrean tidak ditemukan");
+    // A patient may only cancel their own queue. Answer 404 (not 403) so the
+    // response does not reveal that another patient's queue exists.
+    if (
+      user.role === "PASIEN" &&
+      entry.recordPasien.userId !== BigInt(user.id)
+    ) {
+      throw ApiError.notFound("Antrean tidak ditemukan");
+    }
     await assertStaffOwnsClinic(user, entry.clinicId);
 
     // Only write service_history on a genuine transition INTO SELESAI - guards
