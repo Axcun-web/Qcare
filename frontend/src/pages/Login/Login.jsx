@@ -2,6 +2,7 @@ import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { api, firstErrorMessage } from "../../lib/api";
 
 function Login() {
   const navigate = useNavigate();
@@ -9,19 +10,19 @@ function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+
   const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState(""); 
+  const [passwordError, setPasswordError] = useState("");
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
 
     let isValid = true;
 
     if (!email.includes("@")) {
-      setEmailError("Masukkan email yang valid"); 
+      setEmailError("Masukkan email yang valid");
       isValid = false;
     } else {
       setEmailError("");
@@ -34,46 +35,28 @@ function Login() {
       setPasswordError("");
     }
 
-    if (!isValid) return; 
-    
+    if (!isValid) return;
+
     setServerError("");
     setIsLoading(true);
-    
+
     try {
-      const response = await fetch("http://localhost:4000/api/auth/login", {
+      const data = await api("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          email: email, 
-          password: password 
-        }), 
+        body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-      console.log("Response Backend:", data);
-
-      if (!response.ok) {
-        let errorMessage = data.message || "Gagal melakukan login";
-
-        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-          errorMessage = data.errors[0].message || data.errors[0];
-        } else if (data.details && Array.isArray(data.details) && data.details.length > 0) {
-          errorMessage = data.details[0].message || data.details[0];
-        } else if (data.error) {
-          errorMessage = typeof data.error === 'string' ? data.error : data.error.message;
-        }
-
-        throw new Error(errorMessage);
-      }
 
       login(data.data);
       const role = data.data.user.role;
-      navigate(role === "SUPERADMIN" ? "/admin" : role === "PETUGAS" ? "/petugas" : "/patient");
-
+      navigate(
+        role === "SUPERADMIN"
+          ? "/admin"
+          : role === "PETUGAS"
+            ? "/petugas"
+            : "/patient",
+      );
     } catch (error) {
-      setServerError(error.message);
+      setServerError(firstErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +64,7 @@ function Login() {
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
-    if (emailError) setEmailError(""); 
+    if (emailError) setEmailError("");
   };
 
   const handlePasswordChange = (e) => {
@@ -102,40 +85,66 @@ function Login() {
           <p className="welcome-text">Silakan login untuk melanjutkan</p>
 
           {serverError && (
-            <div style={{ 
-              color: "#d9534f", 
-              marginBottom: "15px", 
-              fontSize: "14px", 
-              backgroundColor: "#f9e2e2", 
-              padding: "10px", 
-              borderRadius: "5px",
-              border: "1px solid #ebccd1"
-            }}>
+            <div
+              style={{
+                color: "#d9534f",
+                marginBottom: "15px",
+                fontSize: "14px",
+                backgroundColor: "#f9e2e2",
+                padding: "10px",
+                borderRadius: "5px",
+                border: "1px solid #ebccd1",
+              }}
+            >
               {serverError}
             </div>
           )}
 
           <div className="input-group">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "5px",
+              }}
+            >
               <label style={{ marginBottom: "0" }}>Email</label>
               {emailError && (
-                <span className="email-error-message" style={{ color: "red", fontSize: "12px" }}>*{emailError}</span>
+                <span
+                  className="email-error-message"
+                  style={{ color: "red", fontSize: "12px" }}
+                >
+                  *{emailError}
+                </span>
               )}
             </div>
             <input
-              type="email" 
+              type="email"
               placeholder="Masukkan email"
               value={email}
-              onChange={handleEmailChange} 
-              required 
+              onChange={handleEmailChange}
+              required
             />
           </div>
 
           <div className="input-group">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "5px",
+              }}
+            >
               <label style={{ marginBottom: "0" }}>Password</label>
               {passwordError && (
-                <span className="password-error-message" style={{ color: "red", fontSize: "12px" }}>*{passwordError}</span>
+                <span
+                  className="password-error-message"
+                  style={{ color: "red", fontSize: "12px" }}
+                >
+                  *{passwordError}
+                </span>
               )}
             </div>
             <input

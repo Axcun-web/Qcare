@@ -32,3 +32,33 @@ export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Format email tidak valid"),
   password: z.string().min(1, "Password wajib diisi"),
 });
+
+/** Skema Ubah Nama — Use Case Description Ubah Nama (Tabel 3.21 skripsi). */
+export const updateNameSchema = z
+  .object({
+    nama: z.string().trim().min(3, "Nama minimal 3 karakter").max(150),
+    konfirmasiNama: z.string().trim(),
+  })
+  .refine((data) => data.nama === data.konfirmasiNama, {
+    message: "Nama dan konfirmasi nama tidak sama",
+    path: ["konfirmasiNama"],
+  });
+
+/**
+ * Skema Ubah Password — Use Case Description Ubah Password (Tabel 3.22
+ * skripsi). "Standar keamanan" = aturan yang sama dengan registrasi.
+ */
+export const changePasswordSchema = z
+  .object({
+    passwordLama: z.string().min(1, "Password lama wajib diisi"),
+    passwordBaru: z.string().min(8, "Password minimal 8 karakter").max(72),
+    konfirmasiPassword: z.string(),
+  })
+  .refine((data) => data.passwordBaru === data.konfirmasiPassword, {
+    message: "Password baru dan konfirmasi password tidak sama",
+    path: ["konfirmasiPassword"],
+  })
+  .refine((data) => data.passwordBaru !== data.passwordLama, {
+    message: "Password baru harus berbeda dari password lama",
+    path: ["passwordBaru"],
+  });

@@ -28,6 +28,21 @@ export const userRepository = {
   findPublicById: (id) =>
     prisma.user.findUnique({ where: { id }, select: publicFields }),
 
+  /**
+   * Record lengkap termasuk hash password, berdasarkan id. Hanya untuk
+   * verifikasi password — jangan kirim hasilnya ke client.
+   *
+   * @param {bigint} id
+   */
+  findById: (id) => prisma.user.findUnique({ where: { id } }),
+
   /** @param {object} data */
   create: (data) => prisma.user.create({ data, select: publicFields }),
+
+  /**
+   * @param {bigint} id
+   * @param {object} data
+   */
+  update: (id, data) =>
+    prisma.user.update({ where: { id }, data, select: publicFields }),
 };

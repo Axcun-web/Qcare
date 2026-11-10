@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
 import DoctorSchedule from "../../components/DoctorSchedule";
 import NotificationBell from "../../components/NotificationBell";
+import { confirmLogout } from "../../lib/confirmLogout";
 import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
 
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
     [message, setMessage] = useState("");
 
   const handleLogout = () => {
+    if (!confirmLogout()) return;
     if (logout) {
       logout();
     }
@@ -241,6 +243,7 @@ export default function AdminDashboard() {
         <div className="admin-header-right">
           <NotificationBell />
           {user?.nama}
+          <button onClick={() => navigate("/settings")}>Pengaturan</button>
           <button onClick={handleLogout}>Log Out</button>
         </div>
       </header>

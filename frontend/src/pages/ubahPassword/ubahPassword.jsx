@@ -1,38 +1,61 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './ubahPassword.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api, firstErrorMessage } from "../../lib/api";
+import "./ubahPassword.css";
+
+// Same rule as registration on the backend (auth.validator.js).
+const MIN_PASSWORD_LENGTH = 8;
 
 const UbahPassword = () => {
-  const [passwordLama, setPasswordLama] = useState('');
-  const [passwordBaru, setPasswordBaru] = useState('');
-  const [konfirmasiPassword, setKonfirmasiPassword] = useState('');
-  
+  const [passwordLama, setPasswordLama] = useState("");
+  const [passwordBaru, setPasswordBaru] = useState("");
+  const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validasi sederhana
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (passwordBaru.length < MIN_PASSWORD_LENGTH) {
+      setErrorMessage(`Password baru minimal ${MIN_PASSWORD_LENGTH} karakter.`);
+      return;
+    }
+
     if (passwordBaru !== konfirmasiPassword) {
-      alert('Password baru dan konfirmasi password tidak cocok.');
+      setErrorMessage("Password baru dan konfirmasi password tidak sama.");
       return;
     }
 
-    if (passwordBaru.length < 6) {
-      alert('Password baru minimal harus 6 karakter.');
-      return;
+    setIsSaving(true);
+    try {
+      await api("/auth/me/password", {
+        method: "PATCH",
+        body: JSON.stringify({
+          passwordLama,
+          passwordBaru,
+          konfirmasiPassword,
+        }),
+      });
+      setPasswordLama("");
+      setPasswordBaru("");
+      setKonfirmasiPassword("");
+      setSuccessMessage("Password berhasil diubah.");
+      setTimeout(() => navigate("/settings"), 1200);
+    } catch (error) {
+      setErrorMessage(firstErrorMessage(error));
+    } finally {
+      setIsSaving(false);
     }
-
-    console.log('Password berhasil diubah!');
-    
-    // Kembali ke page settings setelah berhasil
-    navigate('/settings');
   };
 
   return (
     <div className="ubah-password-page">
       <div className="ubah-password-card">
-        
         {/* Top bar khusus untuk Back Button */}
         <div className="ubah-password-topbar">
           <button
@@ -67,6 +90,7 @@ const UbahPassword = () => {
               value={passwordLama}
               onChange={(e) => setPasswordLama(e.target.value)}
               placeholder="Masukkan password lama"
+              autoComplete="current-password"
               required
             />
           </div>
@@ -78,7 +102,8 @@ const UbahPassword = () => {
               id="passwordBaru"
               value={passwordBaru}
               onChange={(e) => setPasswordBaru(e.target.value)}
-              placeholder="Masukkan password baru"
+              placeholder={`Minimal ${MIN_PASSWORD_LENGTH} karakter`}
+              autoComplete="new-password"
               required
             />
           </div>
@@ -91,12 +116,24 @@ const UbahPassword = () => {
               value={konfirmasiPassword}
               onChange={(e) => setKonfirmasiPassword(e.target.value)}
               placeholder="Masukkan kembali password baru"
+              autoComplete="new-password"
               required
             />
           </div>
 
-          <button type="submit" className="btn-submit">
-            Konfirmasi
+          {errorMessage && (
+            <p className="form-message error" role="alert">
+              {errorMessage}
+            </p>
+          )}
+          {successMessage && (
+            <p className="form-message success" role="status">
+              {successMessage}
+            </p>
+          )}
+
+          <button type="submit" className="btn-submit" disabled={isSaving}>
+            {isSaving ? "Menyimpan..." : "Konfirmasi"}
           </button>
         </form>
       </div>

@@ -1,6 +1,7 @@
 import "./Register.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { api, firstErrorMessage } from "../../lib/api";
 
 function Register() {
   const navigate = useNavigate();
@@ -42,29 +43,20 @@ function Register() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/register", {
+      await api("/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           nama: namaLengkap,
-          email: email,
-          password: password,
+          email,
+          password,
           konfirmasiPassword: confirmPassword,
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Gagal melakukan registrasi");
-      }
-
       alert("Registrasi berhasil! Silakan login.");
       navigate("/login");
     } catch (error) {
-      setServerError(error.message);
+      setServerError(firstErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PatientNavbar from "../../components/PatientNavbar";
 import PetugasNavbar from "../../components/PetugasNavbar";
 import { useAuth } from "../../context/AuthContext";
+import { confirmLogout } from "../../lib/confirmLogout";
 import "./Settings.css";
 
 const Settings = () => {
@@ -10,11 +11,16 @@ const Settings = () => {
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
+    if (!confirmLogout()) return;
     if (logout) logout();
     navigate("/login");
   };
 
+  // Petugas and Super Admin share the console navbar (it adapts to the role);
+  // the back button returns to each role's own home.
   const isPetugas = user?.role === "PETUGAS" || user?.role === "SUPERADMIN";
+  const homePath =
+    { SUPERADMIN: "/admin", PETUGAS: "/petugas" }[user?.role] ?? "/patient";
 
   return (
     <div className="settings-page">
@@ -28,7 +34,7 @@ const Settings = () => {
           <button
             type="button"
             className="settings-back"
-            onClick={() => navigate(isPetugas ? "/petugas" : "/patient")}
+            onClick={() => navigate(homePath)}
             aria-label="Kembali ke Dashboard"
           >
             <span className="back-arrow">←</span>
@@ -42,14 +48,21 @@ const Settings = () => {
 
           <div className="settings-card">
             {/* UBAH NAMA */}
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="settings-item"
               onClick={() => navigate("/ubah-nama")}
             >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
-                  <circle cx="24" cy="15" r="7" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                  <circle
+                    cx="24"
+                    cy="15"
+                    r="7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  />
                   <path
                     d="M12 38c0-6.6 5.4-12 12-12s12 5.4 12 12"
                     fill="none"
@@ -64,14 +77,23 @@ const Settings = () => {
             </button>
 
             {/* UBAH KATA SANDI */}
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="settings-item"
               onClick={() => navigate("/ubah-password")}
             >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
-                  <rect x="12" y="21" width="24" height="18" rx="4" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                  <rect
+                    x="12"
+                    y="21"
+                    width="24"
+                    height="18"
+                    rx="4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  />
                   <path
                     d="M17 21v-5a7 7 0 0 1 14 0v5"
                     fill="none"
@@ -94,9 +116,29 @@ const Settings = () => {
             >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
-                  <path d="M10 8v32h16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M23 24h15" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M32 17l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M10 8v32h16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M23 24h15"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M32 17l7 7-7 7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 <span className="logout-text">Keluar</span>
               </div>
@@ -111,15 +153,30 @@ const Settings = () => {
 
           <div className="settings-card">
             {/* TENTANG APLIKASI */}
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="settings-item"
               onClick={() => navigate("/about-us")}
             >
               <div className="settings-item-left">
                 <svg viewBox="0 0 48 48" className="item-icon">
-                  <circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" strokeWidth="2.5" />
-                  <line x1="24" y1="21" x2="24" y2="33" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  />
+                  <line
+                    x1="24"
+                    y1="21"
+                    x2="24"
+                    y2="33"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
                   <circle cx="24" cy="15" r="1.8" fill="currentColor" />
                 </svg>
                 <span>Tentang Aplikasi</span>
@@ -128,8 +185,8 @@ const Settings = () => {
             </button>
 
             {/* FEEDBACK / MASUKAN */}
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="settings-item"
               onClick={() => navigate("/feedback")}
             >

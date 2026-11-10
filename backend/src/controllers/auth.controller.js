@@ -31,4 +31,16 @@ export const authController = {
 
     res.json({ success: true, data: user });
   }),
+
+  updateName: asyncHandler(async (req, res) => {
+    const user = await authService.updateName(req.user.id, req.body);
+
+    res.json({ success: true, message: "Nama berhasil diubah", data: user });
+  }),
+
+  changePassword: asyncHandler(async (req, res) => {
+    await authService.changePassword(req.user.id, req.body);
+
+    res.json({ success: true, message: "Password berhasil diubah" });
+  }),
 };

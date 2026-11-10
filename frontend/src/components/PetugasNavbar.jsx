@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./NotificationBell";
+import { confirmLogout } from "../lib/confirmLogout";
 import "./PetugasNavbar.css";
 
 export default function PetugasNavbar() {
@@ -12,6 +13,7 @@ export default function PetugasNavbar() {
   const dropdownRef = useRef(null);
 
   const handleLogout = () => {
+    if (!confirmLogout()) return;
     if (logout) logout();
     navigate("/login");
   };
@@ -26,26 +28,33 @@ export default function PetugasNavbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Super Admin also sees this navbar on shared pages (Settings): point it at
+  // the admin console instead of the Petugas-only routes.
+  const isSuperAdmin = user?.role === "SUPERADMIN";
+  const homePath = isSuperAdmin ? "/admin" : "/petugas";
+
   return (
     <nav className="petugas-navbar">
-      <Link to="/petugas" className="petugas-navbar-brand">
+      <Link to={homePath} className="petugas-navbar-brand">
         <b>QCare</b>
-        <small>CONSOLE PETUGAS</small>
+        <small>{isSuperAdmin ? "CONSOLE SUPERADMIN" : "CONSOLE PETUGAS"}</small>
       </Link>
 
       <div className="petugas-navbar-links">
         <Link
-          to="/petugas"
-          className={location.pathname === "/petugas" ? "active" : ""}
+          to={homePath}
+          className={location.pathname === homePath ? "active" : ""}
         >
           Dashboard
         </Link>
-        <Link
-          to="/manage-clinics"
-          className={location.pathname === "/manage-clinics" ? "active" : ""}
-        >
-          Klinik
-        </Link>
+        {!isSuperAdmin && (
+          <Link
+            to="/manage-clinics"
+            className={location.pathname === "/manage-clinics" ? "active" : ""}
+          >
+            Klinik
+          </Link>
+        )}
       </div>
 
       <NotificationBell />

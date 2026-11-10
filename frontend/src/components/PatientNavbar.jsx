@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./NotificationBell";
+import { confirmLogout } from "../lib/confirmLogout";
 import "./PatientNavbar.css";
 
 export default function PatientNavbar() {
@@ -22,6 +23,7 @@ export default function PatientNavbar() {
   }, []);
 
   const handleLogout = () => {
+    if (!confirmLogout()) return;
     if (logout) logout();
     navigate("/login");
   };
