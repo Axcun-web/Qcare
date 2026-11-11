@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { formatQueueNumber } from "../../lib/queueNumber";
+import {
+  QUEUE_REFRESH_MS,
+  formatCallTime,
+  formatVisitDate,
+} from "../../lib/visitDates";
 import PatientNavbar from "../../components/PatientNavbar";
 import "./Appointments.css";
 
@@ -16,9 +21,21 @@ const Appointments = () => {
     fetchActiveQueues();
   }, []);
 
-  const fetchActiveQueues = async () => {
+  // Auto-refresh while a queue runs today; future visits have nothing live.
+  const hasLiveQueue = activeQueues.some((q) => !q.isFutureVisit);
+  useEffect(() => {
+    if (!hasLiveQueue) return undefined;
+    const interval = setInterval(
+      () => fetchActiveQueues({ silent: true }),
+      QUEUE_REFRESH_MS,
+    );
+    return () => clearInterval(interval);
+  }, [hasLiveQueue]);
+
+  // silent: background refresh, keep the current view instead of "loading".
+  const fetchActiveQueues = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await api("/queues/mine");
       if (response.success) {
         const allQueues = response.data || [];
@@ -37,9 +54,9 @@ const Appointments = () => {
       }
     } catch (err) {
       console.error("Failed to load appointments:", err);
-      setError("Gagal memuat data janji temu.");
+      if (!silent) setError("Gagal memuat data janji temu.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -107,6 +124,9 @@ const Appointments = () => {
                       <div className="doctor-information">
                         <h2>{activeQueue.doctor?.nama || "Dokter"}</h2>
                         <p>{activeQueue.doctor?.spesialisasi || "Umum"}</p>
+                        <p className="visit-date">
+                          Kunjungan: {formatVisitDate(activeQueue.tanggal)}
+                        </p>
                       </div>
                       <div className="queue-number">
                         <span>NOMOR ANTREAN</span>
@@ -127,8 +147,15 @@ const Appointments = () => {
                         <div>
                           <p>Estimasi Waktu Tunggu</p>
                           <strong>
-                            ~{activeQueue.estimatedWaitTime} Menit
+                            {activeQueue.isFutureVisit
+                              ? "Tersedia pada hari kunjungan"
+                              : `~${activeQueue.estimatedWaitTime} Menit`}
                           </strong>
+                          {!activeQueue.isFutureVisit && activeQueue.estimatedCallTime && (
+                            <p className="call-time">
+                              Perkiraan dipanggil {formatCallTime(activeQueue.estimatedCallTime)}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="current-queue">
@@ -149,14 +176,16 @@ const Appointments = () => {
                         <div
                           className="queue-progress-fill"
                           style={{
-                            width: `${Math.max(10, 100 - activeQueue.peopleAhead * 20)}%`,
+                            width: `${activeQueue.isFutureVisit ? 0 : Math.max(10, 100 - activeQueue.peopleAhead * 20)}%`,
                           }}
                         ></div>
                       </div>
                       <p>
-                        {activeQueue.peopleAhead > 0
-                          ? `${activeQueue.peopleAhead} orang di depan Anda`
-                          : "Giliran Anda berikutnya!"}
+                        {activeQueue.isFutureVisit
+                          ? "Antrean dimulai pada hari kunjungan"
+                          : activeQueue.peopleAhead > 0
+                            ? `${activeQueue.peopleAhead} orang di depan Anda`
+                            : "Giliran Anda berikutnya!"}
                       </p>
                     </div>
 
@@ -174,14 +203,17 @@ const Appointments = () => {
                     </div>
                   </div>
 
-                  <div className="queue-card-actions">
-                    <button
-                      className="cancel-btn"
-                      onClick={() => handleCancelQueue(activeQueue.id)}
-                    >
-                      Batalkan Antrean
-                    </button>
-                  </div>
+                  {/* Patients may cancel only while still waiting. */}
+                  {activeQueue.status === "MENUNGGU" && (
+                    <div className="queue-card-actions">
+                      <button
+                        className="cancel-btn"
+                        onClick={() => handleCancelQueue(activeQueue.id)}
+                      >
+                        Batalkan Antrean
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -216,10 +248,6 @@ const Appointments = () => {
       <footer className="dashboard-footer">
         <div className="footer-links">
           <strong>QCare</strong>
-          <Link to="#">Kebijakan Privasi</Link>
-          <Link to="#">Syarat dan Ketentuan</Link>
-          <Link to="#">Hubungi Bantuan</Link>
-          <Link to="#">Info Darurat</Link>
         </div>
         <div className="footer-copyright">
           © 2026 Manajemen Klinik QCare. Modernisme Klinis untuk Kesehatan.

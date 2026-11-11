@@ -668,3 +668,17 @@
 .status-text-sedang_dipanggil { color: #3b82f6; font-weight: 600; }
 .status-text-sedang_dilayani { color: #6366f1; font-weight: 600; }
 .status-text-selesai { color: #1e7a41; font-weight: 600; }
+
+.queue-card .visit-date {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e6b3a;
+}
+
+.waiting-information .call-time {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #26734d;
+}

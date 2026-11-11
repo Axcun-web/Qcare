@@ -17,6 +17,7 @@ import PetugasDashboard from "./pages/PetugasDashboard/PetugasDashboard";
 import ManageClinics from "./pages/ManageClinics/ManageClinics";
 import AboutUs from "./pages/AboutUs/AboutUs";
 import Feedback from "./pages/Feedback/Feedback";
+import AccountShell from "./components/AccountShell";
 
 // Where to send a logged-in user who hits a route their role can't use -
 // their own home, not a dead end.
@@ -122,7 +123,9 @@ function App() {
           path="/ubah-nama"
           element={
             <RoleRoute roles={ANY_ROLE}>
-              <UbahNama />
+              <AccountShell>
+                <UbahNama />
+              </AccountShell>
             </RoleRoute>
           }
         />
@@ -130,7 +133,9 @@ function App() {
           path="/ubah-password"
           element={
             <RoleRoute roles={ANY_ROLE}>
-              <UbahPassword />
+              <AccountShell>
+                <UbahPassword />
+              </AccountShell>
             </RoleRoute>
           }
         />
@@ -138,7 +143,9 @@ function App() {
           path="/about-us"
           element={
             <RoleRoute roles={ANY_ROLE}>
-              <AboutUs />
+              <AccountShell>
+                <AboutUs />
+              </AccountShell>
             </RoleRoute>
           }
         />
@@ -146,7 +153,9 @@ function App() {
           path="/feedback"
           element={
             <RoleRoute roles={ANY_ROLE}>
-              <Feedback />
+              <AccountShell>
+                <Feedback />
+              </AccountShell>
             </RoleRoute>
           }
         />

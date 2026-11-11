@@ -168,3 +168,29 @@
 .ubah-password-page .btn-submit:hover {
   background-color: #365f36;
 }
+.ubah-nama-page .btn-submit:disabled,
+.ubah-password-page .btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Server error / success line under the form */
+.ubah-nama-page .form-message,
+.ubah-password-page .form-message {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.ubah-nama-page .form-message.error,
+.ubah-password-page .form-message.error {
+  background: #fdecec;
+  color: #b42318;
+}
+
+.ubah-nama-page .form-message.success,
+.ubah-password-page .form-message.success {
+  background: #e8f5ec;
+  color: #1e6b3a;
+}

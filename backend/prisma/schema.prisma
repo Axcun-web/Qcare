@@ -72,6 +72,10 @@ model User {
   role      Role     @default(PASIEN)
   clinicId  BigInt?  @map("clinic_id")
   isActive  Boolean  @default(true) @map("is_active")
+  /// Last authenticated request (updated at most once a minute). Used to
+  /// warn before deactivating someone who is using the app right now
+  /// (Tabel 3.19 exc. 3). Null = not seen since this column was added.
+  lastSeenAt DateTime? @map("last_seen_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

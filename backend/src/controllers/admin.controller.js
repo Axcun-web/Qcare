@@ -2,6 +2,11 @@ import bcrypt from "bcryptjs";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
+import { queueService } from "../services/queue.service.js";
+import { findOverlappingSlot } from "../utils/queueRules.js";
+import { generateTempPassword } from "../utils/tempPassword.js";
+import { parseUserListQuery } from "../utils/userListQuery.js";
+import { isRecentlyActive } from "../utils/presence.js";
 
 const clinicSelect = {
   id: true,
@@ -67,15 +72,137 @@ const jadwalData = (b) => {
   };
 };
 
+/**
+ * The jadwal routes are open to PETUGAS as well as SUPERADMIN. A Petugas may
+ * only manage doctors of their own clinic; Super Admin may manage any.
+ *
+ * @param {{ id: string, role: string }} user - req.user
+ * @param {bigint} doctorClinicId
+ */
+async function assertCanManageClinic(user, doctorClinicId) {
+  if (user.role !== "PETUGAS") return;
+  const staff = await prisma.user.findUnique({
+    where: { id: BigInt(user.id) },
+    select: { clinicId: true },
+  });
+  if (!staff?.clinicId || staff.clinicId !== doctorClinicId)
+    throw ApiError.forbidden("Dokter bukan bagian dari klinik Anda");
+}
+
+/** Loads a jadwal with its doctor's clinic, or throws 404. */
+async function findJadwalWithClinic(id) {
+  const jadwal = await prisma.jadwalPraktikDokter.findUnique({
+    where: { id },
+    include: { doctor: { select: { clinicId: true } } },
+  });
+  if (!jadwal) throw ApiError.notFound("Jadwal tidak ditemukan");
+  return jadwal;
+}
+
+/**
+ * Tabel 3.17 conflict check: the same doctor may not have two slots on the
+ * same weekday whose hours overlap.
+ *
+ * @param {bigint} doctorId
+ * @param {{ hari: string, jamMulai: Date, jamSelesai: Date }} slot
+ * @param {bigint} [ignoreId] - the slot being edited
+ */
+async function assertNoOverlappingSlot(doctorId, slot, ignoreId) {
+  const existing = await prisma.jadwalPraktikDokter.findMany({
+    where: { doctorId, hari: slot.hari },
+    select: { id: true, hari: true, jamMulai: true, jamSelesai: true },
+  });
+  if (findOverlappingSlot(slot, existing, ignoreId))
+    throw ApiError.conflict(
+      "Jadwal bentrok dengan jadwal lain dokter ini pada hari yang sama",
+    );
+}
+
+/** Loads the account to deactivate; refuses the admin's own account. */
+async function findUserForDeactivation(req) {
+  const target = await prisma.user.findUnique({
+    where: { id: BigInt(req.params.id) },
+    select: { id: true, nama: true, lastSeenAt: true },
+  });
+  if (!target) throw ApiError.notFound("Pengguna tidak ditemukan");
+  if (target.id === BigInt(req.user.id))
+    throw ApiError.badRequest(
+      "Anda tidak dapat menonaktifkan akun Anda sendiri",
+    );
+  return target;
+}
+
+/**
+ * Tabel 3.19 exc. 3: warn before deactivating someone who is using the app
+ * right now (seen within the last 5 minutes). The client confirms and
+ * repeats the request with ?force=true. details.code lets it recognise the
+ * case.
+ *
+ * @param {{ nama: string, lastSeenAt: Date | null }} user
+ * @param {boolean} force
+ */
+async function assertNotUsingAppNow(user, force) {
+  if (force || !isRecentlyActive(user.lastSeenAt)) return;
+  throw ApiError.conflict(
+    `${user.nama} sedang menggunakan aplikasi (aktif dalam 5 menit terakhir). Akses akan langsung berakhir jika dinonaktifkan.`,
+    { code: "USER_ACTIVE_NOW", lastSeenAt: user.lastSeenAt },
+  );
+}
+
 export const adminController = {
+  /**
+   * Super Admin home (Gbr 3.83 skripsi): Total Klinik, Total Dokter, Total
+   * Petugas, "Klinik teramai" and the latest feedback. "Teramai" = most
+   * queues (not cancelled) in the last 30 days.
+   */
   overview: asyncHandler(async (_q, res) => {
-    const [patients, staff, clinics, queues] = await Promise.all([
-      prisma.user.count({ where: { role: "PASIEN" } }),
-      prisma.user.count({ where: { role: "PETUGAS" } }),
-      prisma.clinic.count(),
-      prisma.antrean.groupBy({ by: ["status"], _count: true }),
-    ]);
-    res.json({ success: true, data: { patients, staff, clinics, queues } });
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [clinics, doctors, staff, patients, busiest, latestFeedback] =
+      await Promise.all([
+        prisma.clinic.count(),
+        prisma.doctor.count({ where: { isActive: true } }),
+        prisma.user.count({ where: { role: "PETUGAS", isActive: true } }),
+        prisma.user.count({ where: { role: "PASIEN", isActive: true } }),
+        prisma.antrean.groupBy({
+          by: ["clinicId"],
+          where: { tanggal: { gte: since }, status: { not: "DIBATALKAN" } },
+          _count: { _all: true },
+          orderBy: { _count: { clinicId: "desc" } },
+          take: 1,
+        }),
+        prisma.feedback.findMany({
+          orderBy: { tanggalKirim: "desc" },
+          take: 5,
+          select: {
+            id: true,
+            rating: true,
+            isi: true,
+            tanggalKirim: true,
+            user: { select: { nama: true } },
+          },
+        }),
+      ]);
+    const top = busiest[0];
+    const busiestClinic = top
+      ? {
+          ...(await prisma.clinic.findUnique({
+            where: { id: top.clinicId },
+            select: { id: true, nama: true },
+          })),
+          antrean30Hari: top._count._all,
+        }
+      : null;
+    res.json({
+      success: true,
+      data: {
+        totalKlinik: clinics,
+        totalDokter: doctors,
+        totalPetugas: staff,
+        totalPasien: patients,
+        klinikTeramai: busiestClinic,
+        feedbackTerbaru: latestFeedback,
+      },
+    });
   }),
   clinics: asyncHandler(async (_q, res) =>
     res.json({
@@ -165,6 +292,8 @@ export const adminController = {
 
   updateDoctor: asyncHandler(async (req, res) => {
     const { nama, spesialisasi, isActive } = req.body;
+    if (isActive === false)
+      await queueService.assertDoctorHasNoActiveQueues(BigInt(req.params.id));
     res.json({
       success: true,
       data: await prisma.doctor.update({
@@ -179,6 +308,7 @@ export const adminController = {
   // foreign-key restrict error the moment any of those schedules has queue
   // history - soft delete sidesteps that entirely and keeps history intact.
   deleteDoctor: asyncHandler(async (req, res) => {
+    await queueService.assertDoctorHasNoActiveQueues(BigInt(req.params.id));
     const doctor = await prisma.doctor.update({
       where: { id: BigInt(req.params.id) },
       data: { isActive: false },
@@ -200,26 +330,44 @@ export const adminController = {
       where: { id: BigInt(req.params.id) },
     });
     if (!doctor) throw ApiError.notFound("Dokter tidak ditemukan");
+    await assertCanManageClinic(req.user, doctor.clinicId);
+    const data = jadwalData(req.body);
+    await assertNoOverlappingSlot(doctor.id, data);
     res.status(201).json({
       success: true,
       data: await prisma.jadwalPraktikDokter.create({
-        data: { doctorId: doctor.id, ...jadwalData(req.body) },
+        data: { doctorId: doctor.id, ...data },
       }),
     });
   }),
 
-  updateJadwal: asyncHandler(async (req, res) =>
+  updateJadwal: asyncHandler(async (req, res) => {
+    const jadwal = await findJadwalWithClinic(BigInt(req.params.id));
+    await assertCanManageClinic(req.user, jadwal.doctor.clinicId);
+    const data = jadwalData(req.body);
+    await assertNoOverlappingSlot(jadwal.doctorId, data, jadwal.id);
+    // Moving a slot to another weekday would leave booked patients on a day
+    // the doctor no longer practises.
+    if (
+      data.hari !== jadwal.hari &&
+      (await queueService.countActiveFromToday({ jadwalId: jadwal.id }))
+    )
+      throw ApiError.conflict(
+        "Hari jadwal tidak dapat diubah karena masih ada antrean aktif pada jadwal ini",
+      );
     res.json({
       success: true,
       data: await prisma.jadwalPraktikDokter.update({
-        where: { id: BigInt(req.params.id) },
-        data: jadwalData(req.body),
+        where: { id: jadwal.id },
+        data,
       }),
-    }),
-  ),
+    });
+  }),
 
   deleteJadwal: asyncHandler(async (req, res) => {
     const id = BigInt(req.params.id);
+    const jadwal = await findJadwalWithClinic(id);
+    await assertCanManageClinic(req.user, jadwal.doctor.clinicId);
     if (await prisma.antrean.count({ where: { jadwalId: id } }))
       throw ApiError.conflict(
         "Jadwal tidak dapat dihapus karena sudah memiliki riwayat antrean",
@@ -250,15 +398,31 @@ export const adminController = {
     });
   }),
 
-  users: asyncHandler(async (_q, res) =>
-    res.json({
-      success: true,
-      data: await prisma.user.findMany({
+  // Users tab: ?q=&role=&status=active|inactive&page=&pageSize=
+  // data stays an array; meta carries the paging totals.
+  users: asyncHandler(async (req, res) => {
+    const { where, skip, take, page, pageSize } = parseUserListQuery(req.query);
+    const [items, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
         select: publicUser,
         orderBy: { createdAt: "desc" },
+        skip,
+        take,
       }),
-    }),
-  ),
+      prisma.user.count({ where }),
+    ]);
+    res.json({
+      success: true,
+      data: items,
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      },
+    });
+  }),
 
   updateUser: asyncHandler(async (req, res) => {
     const { nama, email, noHp, isActive, clinicId } = req.body,
@@ -266,6 +430,13 @@ export const adminController = {
         where: { id: BigInt(req.params.id) },
       });
     if (!existing) throw ApiError.notFound("Pengguna tidak ditemukan");
+    if (isActive === false && existing.isActive) {
+      if (existing.id === BigInt(req.user.id))
+        throw ApiError.badRequest(
+          "Anda tidak dapat menonaktifkan akun Anda sendiri",
+        );
+      await assertNotUsingAppNow(existing, req.query.force === "true");
+    }
     const data = {
       ...(nama ? { nama } : {}),
       ...(email ? { email: email.toLowerCase() } : {}),
@@ -285,13 +456,51 @@ export const adminController = {
     });
   }),
 
-  // Soft delete: sets isActive: false rather than removing the row.
-  // auth.service.js already blocks login for inactive accounts, so this
-  // alone is enough to revoke access without losing history (feedback,
-  // antrean, etc. that reference this user).
+  /**
+   * Tabel 3.19 "mereset password". Also the thesis's answer to a forgotten
+   * password (there is no Lupa Password use case): the admin sets a random
+   * temporary password, shown once, and the user changes it via Ubah
+   * Password. The admin cannot reset their own account here.
+   */
+  resetUserPassword: asyncHandler(async (req, res) => {
+    const id = BigInt(req.params.id);
+    if (id === BigInt(req.user.id))
+      throw ApiError.badRequest(
+        "Gunakan menu Ubah Password untuk mengganti password Anda sendiri",
+      );
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, nama: true },
+    });
+    if (!target) throw ApiError.notFound("Pengguna tidak ditemukan");
+
+    const temporaryPassword = generateTempPassword();
+    const password = await bcrypt.hash(temporaryPassword, 10);
+    await prisma.$transaction([
+      prisma.user.update({ where: { id }, data: { password } }),
+      prisma.notification.create({
+        data: {
+          userId: id,
+          pesan:
+            "Password Anda telah direset oleh admin. Segera ganti password melalui menu Pengaturan > Ubah Kata Sandi.",
+        },
+      }),
+    ]);
+    res.json({
+      success: true,
+      message: `Password ${target.nama} berhasil direset`,
+      data: { temporaryPassword },
+    });
+  }),
+
+  // Soft delete: sets isActive: false rather than removing the row, so
+  // history (feedback, antrean, ...) stays intact. Access ends immediately:
+  // the authenticate middleware rejects inactive accounts on every request.
   deleteUser: asyncHandler(async (req, res) => {
+    const target = await findUserForDeactivation(req);
+    await assertNotUsingAppNow(target, req.query.force === "true");
     const user = await prisma.user.update({
-      where: { id: BigInt(req.params.id) },
+      where: { id: target.id },
       data: { isActive: false },
       select: publicUser,
     });

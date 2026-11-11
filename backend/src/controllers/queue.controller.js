@@ -43,6 +43,13 @@ export const queueController = {
       data: await queueService.recordArrival(req.user, req.params.id),
     }),
   ),
+  reschedule: asyncHandler(async (req, res) =>
+    res.json({
+      success: true,
+      message: "Tanggal antrean berhasil dipindahkan",
+      data: await queueService.reschedule(req.user, req.params.id, req.body),
+    }),
+  ),
   status: asyncHandler(async (req, res) =>
     res.json({
       success: true,
@@ -50,6 +57,7 @@ export const queueController = {
         req.user,
         req.params.id,
         req.body.status,
+        req.body.alasan,
       ),
     }),
   ),

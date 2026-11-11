@@ -1,23 +1,43 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './ubahNama.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { api, firstErrorMessage } from "../../lib/api";
+import "./ubahNama.css";
 
 const UbahNama = () => {
-  const [nama, setNama] = useState('');
-  const [konfirmasiNama, setKonfirmasiNama] = useState('');
-  
+  const { user, refreshUser } = useAuth();
+  const [nama, setNama] = useState(user?.nama ?? "");
+  const [konfirmasiNama, setKonfirmasiNama] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (nama !== konfirmasiNama) {
-      alert('Nama dan konfirmasi nama tidak cocok.');
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (nama.trim() !== konfirmasiNama.trim()) {
+      setErrorMessage("Nama dan konfirmasi nama tidak sama.");
       return;
     }
 
-    console.log('Nama baru berhasil disimpan:', nama);
-    navigate('/settings');
+    setIsSaving(true);
+    try {
+      await api("/auth/me", {
+        method: "PATCH",
+        body: JSON.stringify({ nama, konfirmasiNama }),
+      });
+      await refreshUser();
+      setSuccessMessage("Nama berhasil diubah.");
+      setTimeout(() => navigate("/settings"), 1200);
+    } catch (error) {
+      setErrorMessage(firstErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -57,6 +77,8 @@ const UbahNama = () => {
               value={nama}
               onChange={(e) => setNama(e.target.value)}
               placeholder="Masukkan nama lengkap"
+              minLength={3}
+              maxLength={150}
               required
             />
           </div>
@@ -73,8 +95,19 @@ const UbahNama = () => {
             />
           </div>
 
-          <button type="submit" className="btn-submit">
-            Konfirmasi
+          {errorMessage && (
+            <p className="form-message error" role="alert">
+              {errorMessage}
+            </p>
+          )}
+          {successMessage && (
+            <p className="form-message success" role="status">
+              {successMessage}
+            </p>
+          )}
+
+          <button type="submit" className="btn-submit" disabled={isSaving}>
+            {isSaving ? "Menyimpan..." : "Konfirmasi"}
           </button>
         </form>
       </div>

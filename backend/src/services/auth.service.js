@@ -90,4 +90,41 @@ export const authService = {
 
     return user;
   },
+
+  /**
+   * Ubah Nama (Tabel 3.21) — berlaku untuk semua role.
+   *
+   * @param {string} userId - `sub` dari payload JWT.
+   * @param {{ nama: string }} input
+   */
+  async updateName(userId, { nama }) {
+    await this.getProfile(userId);
+    return userRepository.update(BigInt(userId), { nama });
+  },
+
+  /**
+   * Ubah Password (Tabel 3.22) — berlaku untuk semua role. Password lama
+   * wajib benar; aturan password baru sama dengan registrasi.
+   *
+   * @param {string} userId - `sub` dari payload JWT.
+   * @param {{ passwordLama: string, passwordBaru: string }} input
+   */
+  async changePassword(userId, { passwordLama, passwordBaru }) {
+    const user = await userRepository.findById(BigInt(userId));
+
+    if (!user) {
+      throw ApiError.notFound("Pengguna tidak ditemukan");
+    }
+
+    const isPasswordValid = await bcrypt.compare(passwordLama, user.password);
+
+    if (!isPasswordValid) {
+      throw ApiError.badRequest("Password lama salah", {
+        passwordLama: ["Password lama salah"],
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(passwordBaru, SALT_ROUNDS);
+    await userRepository.update(user.id, { password: hashedPassword });
+  },
 };

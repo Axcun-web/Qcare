@@ -1,0 +1,8 @@
+/* The wrapped pages center their card in the full viewport; leave room for
+   the 70px navbar so the page does not scroll for nothing. */
+.account-shell > .ubah-nama-page,
+.account-shell > .ubah-password-page,
+.account-shell > .about-us-page,
+.account-shell > .feedback-page {
+  min-height: calc(100vh - 70px);
+}

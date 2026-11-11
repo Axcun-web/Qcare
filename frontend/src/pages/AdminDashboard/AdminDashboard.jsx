@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../lib/api";
+import { api, withActiveUserConfirm } from "../../lib/api";
 import DoctorSchedule from "../../components/DoctorSchedule";
 import NotificationBell from "../../components/NotificationBell";
+import { confirmLogout } from "../../lib/confirmLogout";
 import "./AdminDashboard.css";
 import { useNavigate } from "react-router-dom";
 
@@ -16,7 +17,7 @@ const emptyClinic = {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [tab, setTab] = useState("clinics"),
+  const [tab, setTab] = useState("home"),
     [clinics, setClinics] = useState([]),
     [users, setUsers] = useState([]),
     [feedback, setFeedback] = useState([]),
@@ -27,9 +28,23 @@ export default function AdminDashboard() {
     [feedbackFilter, setFeedbackFilter] = useState("ALL"),
     [feedbackPage, setFeedbackPage] = useState(1),
     [scheduleOpenId, setScheduleOpenId] = useState(null),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    // { nama, password } after an admin password reset, shown once.
+    [resetResult, setResetResult] = useState(null),
+    // Gbr 3.83 home stats
+    [overview, setOverview] = useState(null),
+    // Users tab: server-side search, filters and paging
+    [userQuery, setUserQuery] = useState({
+      q: "",
+      role: "",
+      status: "",
+      page: 1,
+    }),
+    [searchText, setSearchText] = useState(""),
+    [userMeta, setUserMeta] = useState({ page: 1, totalPages: 1, total: 0 });
 
   const handleLogout = () => {
+    if (!confirmLogout()) return;
     if (logout) {
       logout();
     }
@@ -39,16 +54,54 @@ export default function AdminDashboard() {
   const load = () =>
     Promise.all([
       api("/admin/clinics"),
-      api("/admin/users"),
+      api("/admin/overview"),
       api("/admin/feedback"),
     ])
-      .then(([c, u, f]) => {
+      .then(([c, o, f]) => {
         setClinics(c.data);
         setSelectedClinicId((current) => current ?? c.data[0]?.id ?? null);
-        setUsers(u.data);
+        setOverview(o.data);
         setFeedback(f.data);
       })
       .catch((e) => setMessage(e.message));
+
+  const loadUsers = () => {
+    const params = new URLSearchParams({ page: String(userQuery.page) });
+    if (userQuery.q) params.set("q", userQuery.q);
+    if (userQuery.role) params.set("role", userQuery.role);
+    if (userQuery.status) params.set("status", userQuery.status);
+    return api(`/admin/users?${params}`)
+      .then((res) => {
+        setUsers(res.data);
+        setUserMeta(res.meta);
+      })
+      .catch((e) => setMessage(e.message));
+  };
+
+  // Reload when the filters change, and whenever the Users tab is opened
+  // (staff can also be edited from the Klinik tab).
+  useEffect(() => {
+    if (tab === "users") loadUsers();
+  }, [userQuery, tab]);
+
+  // Search as you type, but only after a short pause.
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setUserQuery((current) =>
+        current.q === searchText.trim()
+          ? current
+          : { ...current, q: searchText.trim(), page: 1 },
+      );
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchText]);
+
+  const setUserFilter = (key, value) =>
+    setUserQuery((current) => ({
+      ...current,
+      [key]: value,
+      page: key === "page" ? value : 1,
+    }));
 
   useEffect(() => {
     load();
@@ -178,7 +231,11 @@ export default function AdminDashboard() {
           body: JSON.stringify({ isActive: true }),
         });
       } else {
-        await api(`/admin/users/${staff.id}`, { method: "DELETE" });
+        // Tabel 3.19 exc. 3: confirm again if this Petugas is online now.
+        const done = await withActiveUserConfirm((query) =>
+          api(`/admin/users/${staff.id}${query}`, { method: "DELETE" }),
+        );
+        if (done === null) return;
       }
       await refreshDetail();
       load();
@@ -206,14 +263,46 @@ export default function AdminDashboard() {
     try {
       const data = Object.fromEntries(new FormData(e.currentTarget));
       data.isActive = e.currentTarget.elements.isActive.checked;
-      await api(`/admin/users/${item.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
-      load();
+      // Unticking "Aktif" for someone online now asks for confirmation
+      // (Tabel 3.19 exc. 3).
+      const done = await withActiveUserConfirm((query) =>
+        api(`/admin/users/${item.id}${query}`, {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        }),
+      );
+      if (done === null) return;
+      loadUsers();
       setMessage("Data pengguna diperbarui.");
     } catch (err) {
       setMessage(err.message);
+    }
+  };
+
+  // Tabel 3.19 "mereset password": the temporary password is shown once.
+  const resetPassword = async (item) => {
+    if (
+      !window.confirm(
+        `Reset password ${item.nama}? Password lama tidak dapat dipakai lagi.`,
+      )
+    )
+      return;
+    try {
+      const res = await api(`/admin/users/${item.id}/reset-password`, {
+        method: "POST",
+      });
+      setResetResult({ nama: item.nama, password: res.data.temporaryPassword });
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  const copyResetPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(resetResult.password);
+      setMessage("Password sementara disalin.");
+    } catch {
+      setMessage("Salin manual: clipboard tidak dapat diakses.");
     }
   };
 
@@ -241,6 +330,7 @@ export default function AdminDashboard() {
         <div className="admin-header-right">
           <NotificationBell />
           {user?.nama}
+          <button onClick={() => navigate("/settings")}>Pengaturan</button>
           <button onClick={handleLogout}>Log Out</button>
         </div>
       </header>
@@ -249,6 +339,7 @@ export default function AdminDashboard() {
         <h1>Administrasi QCare</h1>
         <nav className="admin-tabs">
           {[
+            ["home", "Beranda"],
             ["clinics", "Klinik"],
             ["users", "User"],
             ["feedback", "Feedback"],
@@ -262,6 +353,79 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
+
+        {tab === "home" && (
+          <section className="admin-home">
+            <div className="admin-stats">
+              {[
+                ["Total Klinik", overview?.totalKlinik],
+                ["Total Dokter", overview?.totalDokter],
+                ["Total Petugas", overview?.totalPetugas],
+                ["Total Pasien", overview?.totalPasien],
+              ].map(([label, value]) => (
+                <div className="admin-stat" key={label}>
+                  <span>{label}</span>
+                  <strong>{value ?? "-"}</strong>
+                </div>
+              ))}
+            </div>
+            <div className="admin-home-grid">
+              <div className="admin-home-card">
+                <h2>Klinik teramai</h2>
+                <p className="admin-home-sub">
+                  Antrean (tanpa dibatalkan), 30 hari terakhir
+                </p>
+                {overview?.klinikTeramai ? (
+                  <>
+                    <strong className="busiest-name">
+                      {overview.klinikTeramai.nama}
+                    </strong>
+                    <span className="busiest-count">
+                      {overview.klinikTeramai.antrean30Hari} antrean
+                    </span>
+                  </>
+                ) : (
+                  <p className="empty-note">
+                    Belum ada antrean dalam 30 hari terakhir.
+                  </p>
+                )}
+              </div>
+              <div className="admin-home-card">
+                <h2>Feedback &amp; keluhan terbaru</h2>
+                {overview?.feedbackTerbaru?.length ? (
+                  <ul className="latest-feedback">
+                    {overview.feedbackTerbaru.map((item) => (
+                      <li key={item.id}>
+                        <div>
+                          <b>{item.user?.nama ?? "Pengguna"}</b>
+                          {item.rating ? (
+                            <span> · {"★".repeat(item.rating)}</span>
+                          ) : null}
+                        </div>
+                        <p>{item.isi}</p>
+                        <small>
+                          {new Date(item.tanggalKirim).toLocaleDateString(
+                            "id-ID",
+                            { day: "numeric", month: "short", year: "numeric" },
+                          )}
+                        </small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-note">Belum ada feedback.</p>
+                )}
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => setTab("feedback")}
+                >
+                  Lihat semua feedback →
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {tab === "clinics" && (
           <section>
@@ -470,6 +634,38 @@ export default function AdminDashboard() {
           <section className="management">
             <h2>Edit data user</h2>
             <p>Ubah data akun User di sini.</p>
+            <div className="user-filters">
+              <input
+                type="search"
+                placeholder="Cari nama atau email"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                aria-label="Cari pengguna"
+              />
+              <select
+                value={userQuery.role}
+                onChange={(e) => setUserFilter("role", e.target.value)}
+                aria-label="Filter role"
+              >
+                <option value="">Semua role</option>
+                <option value="PASIEN">Pasien</option>
+                <option value="PETUGAS">Petugas</option>
+                <option value="SUPERADMIN">Super Admin</option>
+              </select>
+              <select
+                value={userQuery.status}
+                onChange={(e) => setUserFilter("status", e.target.value)}
+                aria-label="Filter status"
+              >
+                <option value="">Semua status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Nonaktif</option>
+              </select>
+              <span className="user-count">{userMeta.total} pengguna</span>
+            </div>
+            {users.length === 0 && (
+              <p className="empty-note">Tidak ada pengguna yang cocok.</p>
+            )}
             {users.map((item) => (
               <form
                 className="edit-user"
@@ -502,9 +698,39 @@ export default function AdminDashboard() {
                     defaultChecked={item.isActive}
                   />
                 </label>
-                <button>Simpan</button>
+                <div className="edit-user-actions">
+                  <button>Simpan</button>
+                  {item.id !== user?.id && (
+                    <button
+                      type="button"
+                      className="reset-password"
+                      onClick={() => resetPassword(item)}
+                    >
+                      Reset password
+                    </button>
+                  )}
+                </div>
               </form>
             ))}
+            <div className="user-pager">
+              <button
+                type="button"
+                disabled={userMeta.page <= 1}
+                onClick={() => setUserFilter("page", userMeta.page - 1)}
+              >
+                ← Sebelumnya
+              </button>
+              <span>
+                Halaman {userMeta.page} dari {userMeta.totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={userMeta.page >= userMeta.totalPages}
+                onClick={() => setUserFilter("page", userMeta.page + 1)}
+              >
+                Berikutnya →
+              </button>
+            </div>
           </section>
         )}
 
@@ -602,6 +828,39 @@ export default function AdminDashboard() {
                 </label>
               ))}
               <button className="save">Simpan klinik</button>
+            </form>
+          </div>
+        )}
+
+        {resetResult && (
+          <div className="admin-modal">
+            <form onSubmit={(e) => e.preventDefault()}>
+              <button type="button" onClick={() => setResetResult(null)}>
+                ×
+              </button>
+              <h2>Password direset</h2>
+              <p className="reset-note">
+                Berikan password sementara ini kepada {resetResult.nama}.
+                Password hanya ditampilkan sekali. Minta pengguna segera
+                menggantinya melalui Pengaturan &gt; Ubah Kata Sandi.
+              </p>
+              <code className="temp-password">{resetResult.password}</code>
+              <div className="reset-actions">
+                <button
+                  type="button"
+                  className="save"
+                  onClick={copyResetPassword}
+                >
+                  Salin password
+                </button>
+                <button
+                  type="button"
+                  className="save secondary"
+                  onClick={() => setResetResult(null)}
+                >
+                  Selesai
+                </button>
+              </div>
             </form>
           </div>
         )}

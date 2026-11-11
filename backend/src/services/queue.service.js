@@ -10,6 +10,12 @@ import {
   lockDoctorQueue,
   nextQueueNumber,
 } from "../utils/queueNumber.js";
+import {
+  bookingDateError,
+  estimateCallTime,
+  isFutureVisit,
+  transitionError,
+} from "../utils/queueRules.js";
 
 const STATUS_MESSAGES = {
   SEDANG_DIPANGGIL: (nomor) =>
@@ -67,7 +73,9 @@ const HARI_NAMES = [
   "JUMAT",
   "SABTU",
 ];
-const hariFromDate = (date) => HARI_NAMES[date.getDay()];
+// Callers pass startOfDay() values (UTC midnight of the local date), so the
+// UTC weekday is the local weekday regardless of the server's time zone.
+const hariFromDate = (date) => HARI_NAMES[date.getUTCDay()];
 
 async function validateDoctorSchedule(doctorId, jadwalId) {
   const [doctor, schedule] = await Promise.all([
@@ -93,15 +101,19 @@ async function createAntreanTransaction({
   sumber,
 }) {
   const result = await prisma.$transaction(async (tx) => {
+    // Tabel 3.6 exc. 2: one active queue per patient, doctor and date. A
+    // patient may hold bookings with other doctors or on other days.
     const existing = await tx.antrean.findFirst({
       where: {
         recordPasienId: patient.id,
+        doctorId: doctor.id,
+        tanggal: date,
         status: { in: ["MENUNGGU", "SEDANG_DIPANGGIL", "SEDANG_DILAYANI"] },
       },
     });
     if (existing)
       throw ApiError.conflict(
-        "Pasien sudah memiliki antrean aktif. Silakan selesaikan atau batalkan terlebih dahulu.",
+        "Pasien sudah memiliki antrean aktif untuk dokter dan tanggal ini.",
       );
     // Each doctor has an isolated daily queue (D{doctorId}-NN). The lock
     // serialises concurrent bookings for this doctor so the number read +
@@ -176,30 +188,51 @@ const ACTIVE_STATUSES = ["MENUNGGU", "SEDANG_DIPANGGIL", "SEDANG_DILAYANI"];
  *   nomorAntrean: number, status: string }} antrean
  */
 async function liveQueueStatus(antrean) {
-  const [currentlyServing, peopleAhead, latestPrediction] = await Promise.all([
-    prisma.antrean.findFirst({
-      where: {
-        jadwalId: antrean.jadwalId,
-        tanggal: antrean.tanggal,
-        status: { in: ["SEDANG_DILAYANI", "SEDANG_DIPANGGIL"] },
-      },
-      orderBy: { nomorAntrean: "desc" },
-      select: { nomorAntrean: true },
-    }),
-    prisma.antrean.count({
-      where: {
-        jadwalId: antrean.jadwalId,
-        tanggal: antrean.tanggal,
-        status: "MENUNGGU",
-        nomorAntrean: { lt: antrean.nomorAntrean },
-      },
-    }),
-    prisma.predictionHistory.findFirst({
-      where: { antreanId: antrean.id },
-      orderBy: { waktuPrediksi: "desc" },
-      select: { estimasiMenit: true, sumberEstimasi: true },
-    }),
-  ]);
+  // A booking for a later day has no session yet: no position or estimate.
+  // The UI shows "Estimasi tersedia pada hari kunjungan" instead.
+  if (isFutureVisit(antrean.tanggal, startOfDay())) {
+    return {
+      currentQueueNumber: "-",
+      peopleAhead: null,
+      estimatedWaitTime: null,
+      estimatedCallTime: null,
+      sumberEstimasi: null,
+      isFutureVisit: true,
+    };
+  }
+  const [currentlyServing, peopleAhead, latestPrediction, jadwal] =
+    await Promise.all([
+      prisma.antrean.findFirst({
+        where: {
+          jadwalId: antrean.jadwalId,
+          tanggal: antrean.tanggal,
+          status: { in: ["SEDANG_DILAYANI", "SEDANG_DIPANGGIL"] },
+        },
+        orderBy: { nomorAntrean: "desc" },
+        select: { nomorAntrean: true },
+      }),
+      prisma.antrean.count({
+        where: {
+          jadwalId: antrean.jadwalId,
+          tanggal: antrean.tanggal,
+          status: "MENUNGGU",
+          nomorAntrean: { lt: antrean.nomorAntrean },
+        },
+      }),
+      prisma.predictionHistory.findFirst({
+        where: { antreanId: antrean.id },
+        orderBy: { waktuPrediksi: "desc" },
+        select: {
+          estimasiMenit: true,
+          sumberEstimasi: true,
+          waktuPrediksi: true,
+        },
+      }),
+      prisma.jadwalPraktikDokter.findUnique({
+        where: { id: antrean.jadwalId },
+        select: { jamMulai: true },
+      }),
+    ]);
 
   let estimatedWaitTime = latestPrediction?.estimasiMenit;
   let sumberEstimasi = latestPrediction?.sumberEstimasi;
@@ -215,11 +248,25 @@ async function liveQueueStatus(antrean) {
     sumberEstimasi = hasHistory ? "HISTORICAL_AVG" : "DEFAULT";
   }
 
+  // "Estimasi jam dipanggil" (Bab 1 §1.3). A stored prediction's minutes
+  // count from when it was made; the fallback counts from now.
+  const estimatedCallTime =
+    estimatedWaitTime == null || !jadwal
+      ? null
+      : estimateCallTime({
+          now: latestPrediction?.waktuPrediksi ?? new Date(),
+          visitDate: antrean.tanggal,
+          sessionStart: jadwal.jamMulai,
+          waitMinutes: estimatedWaitTime,
+        });
+
   return {
     currentQueueNumber: currentlyServing?.nomorAntrean ?? "-",
     peopleAhead,
     estimatedWaitTime,
+    estimatedCallTime,
     sumberEstimasi,
+    isFutureVisit: false,
   };
 }
 
@@ -230,6 +277,9 @@ async function liveQueueStatus(antrean) {
  * itself, so it is logged and an empty Map returned.
  */
 async function refreshPredictions(entry) {
+  // Predictions use the live session (who is being served now); a future
+  // day has none, and logging a guess would skew the accuracy evaluation.
+  if (isFutureVisit(entry.tanggal, startOfDay())) return new Map();
   try {
     return await predictionService.refreshSession({
       doctorId: entry.doctorId,
@@ -243,6 +293,37 @@ async function refreshPredictions(entry) {
 }
 
 export const queueService = {
+  /**
+   * Active (waiting, called or in service) queues from today on that match
+   * `where`, e.g. { doctorId } or { jadwalId }. Used to warn before a doctor
+   * is deactivated or a schedule changes while patients are booked
+   * (Tabel 3.17, 3.18 exceptions).
+   *
+   * @param {object} where - extra Prisma filter on Antrean
+   */
+  countActiveFromToday(where) {
+    return prisma.antrean.count({
+      where: {
+        ...where,
+        tanggal: { gte: startOfDay() },
+        status: { in: ACTIVE_STATUSES },
+      },
+    });
+  },
+
+  /**
+   * Tabel 3.18 exception: a doctor with patients still booked from today on
+   * cannot be deactivated; staff must finish or cancel those queues first.
+   *
+   * @param {bigint} doctorId
+   */
+  async assertDoctorHasNoActiveQueues(doctorId) {
+    const active = await this.countActiveFromToday({ doctorId });
+    if (active)
+      throw ApiError.conflict(
+        `Dokter masih memiliki ${active} antrean aktif. Selesaikan atau batalkan antrean tersebut sebelum menonaktifkan dokter.`,
+      );
+  },
   async listDoctors() {
     return prisma.doctor.findMany({
       where: { isActive: true },
@@ -266,10 +347,18 @@ export const queueService = {
     const doctorId = BigInt(input.doctorId),
       jadwalId = BigInt(input.jadwalId),
       date = startOfDay(input.tanggal ? new Date(input.tanggal) : new Date());
+    // Tabel 3.5: the patient picks a visit date (today .. today + 7) and a
+    // practice slot that actually runs on that weekday.
+    const dateError = bookingDateError(date, startOfDay());
+    if (dateError) throw ApiError.badRequest(dateError);
     const { doctor, schedule } = await validateDoctorSchedule(
       doctorId,
       jadwalId,
     );
+    if (schedule.hari !== hariFromDate(date))
+      throw ApiError.badRequest(
+        "Dokter tidak praktik pada tanggal yang dipilih",
+      );
 
     let patient;
     const hubungan =
@@ -373,6 +462,118 @@ export const queueService = {
       sumber: "WALK_IN",
     });
   },
+  /**
+   * Tabel 3.16 (Petugas edits a queue): move a waiting queue to another
+   * date. Same rules as booking (date window, doctor practises that day,
+   * quota, no duplicate for the same patient, doctor and date); the queue
+   * gets the next number of the new day. Online patients are notified.
+   *
+   * @param {{ id: string, role: string }} user - PETUGAS or SUPERADMIN
+   * @param {string} queueId
+   * @param {{ tanggal: string, jadwalId?: string|number }} input
+   */
+  async reschedule(user, queueId, input) {
+    const entry = await prisma.antrean.findUnique({
+      where: { id: BigInt(queueId) },
+      include: { recordPasien: { select: { userId: true, nama: true } } },
+    });
+    if (!entry) throw ApiError.notFound("Antrean tidak ditemukan");
+    await assertStaffOwnsClinic(user, entry.clinicId);
+    if (entry.status !== "MENUNGGU")
+      throw ApiError.badRequest(
+        "Hanya antrean yang masih menunggu yang dapat dipindahkan tanggalnya",
+      );
+
+    if (!input?.tanggal) throw ApiError.badRequest("Tanggal baru wajib diisi");
+    const date = startOfDay(new Date(input.tanggal));
+    const dateError = bookingDateError(date, startOfDay());
+    if (dateError) throw ApiError.badRequest(dateError);
+    if (date.getTime() === entry.tanggal.getTime())
+      throw ApiError.badRequest(
+        "Tanggal baru sama dengan tanggal antrean saat ini",
+      );
+
+    const slots = await prisma.jadwalPraktikDokter.findMany({
+      where: {
+        doctorId: entry.doctorId,
+        hari: hariFromDate(date),
+        kuotaAntrean: { gt: 0 },
+        ...(input.jadwalId ? { id: BigInt(input.jadwalId) } : {}),
+      },
+    });
+    if (slots.length === 0)
+      throw ApiError.badRequest(
+        "Dokter tidak praktik pada tanggal yang dipilih",
+      );
+    if (slots.length > 1)
+      throw ApiError.badRequest(
+        "Dokter memiliki lebih dari satu jadwal pada hari itu; pilih jadwalnya",
+      );
+    const schedule = slots[0];
+
+    const updated = await prisma.$transaction(async (tx) => {
+      await lockDoctorQueue(tx, entry.doctorId);
+      const duplicate = await tx.antrean.findFirst({
+        where: {
+          id: { not: entry.id },
+          recordPasienId: entry.recordPasienId,
+          doctorId: entry.doctorId,
+          tanggal: date,
+          status: { in: ACTIVE_STATUSES },
+        },
+      });
+      if (duplicate)
+        throw ApiError.conflict(
+          "Pasien sudah memiliki antrean aktif untuk dokter ini pada tanggal tersebut",
+        );
+      const booked = await tx.antrean.count({
+        where: {
+          jadwalId: schedule.id,
+          tanggal: date,
+          status: { notIn: ["DIBATALKAN"] },
+        },
+      });
+      if (booked >= schedule.kuotaAntrean)
+        throw ApiError.conflict(
+          "Kuota antrean pada tanggal tersebut sudah penuh",
+        );
+      const nomorAntrean = await nextQueueNumber(tx, entry.doctorId, date);
+      const moved = await tx.antrean.update({
+        where: { id: entry.id },
+        data: {
+          tanggal: date,
+          jadwalId: schedule.id,
+          nomorAntrean,
+          // Arrival belongs to the visit day; record it again on the new day.
+          timestampKedatangan: null,
+        },
+        include: queueInclude,
+      });
+      if (entry.sumber === "ONLINE") {
+        const tanggalLabel = date.toLocaleDateString("id-ID", {
+          timeZone: "UTC",
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        await tx.notification.create({
+          data: {
+            userId: entry.recordPasien.userId,
+            antreanId: entry.id,
+            pesan: `Antrean Anda dipindahkan ke ${tanggalLabel}. Nomor antrean baru: ${formatQueueNumber(entry.doctorId, nomorAntrean)}.`,
+          },
+        });
+      }
+      return moved;
+    });
+
+    // Both sessions changed: the old one lost a patient, the new one gained one.
+    await refreshPredictions(entry);
+    await refreshPredictions(updated);
+    return updated;
+  },
+
   async mine(userId) {
     const queues = await prisma.antrean.findMany({
       where: { recordPasien: { userId: BigInt(userId) } },
@@ -438,7 +639,14 @@ export const queueService = {
       include: queueInclude,
     });
   },
-  async changeStatus(user, queueId, status) {
+  /**
+   * @param {{ id: string, role: string }} user
+   * @param {string} queueId
+   * @param {string} status - target status
+   * @param {string} [alasan] - required when staff skips (DILEWATI),
+   *   Tabel 3.14 step 4 "alasan tidak hadir"
+   */
+  async changeStatus(user, queueId, status, alasan) {
     const allowed = [
       "SEDANG_DIPANGGIL",
       "SEDANG_DILAYANI",
@@ -451,6 +659,12 @@ export const queueService = {
     if (user.role === "PASIEN" && status !== "DIBATALKAN") {
       throw ApiError.forbidden("Pasien hanya dapat membatalkan antrean");
     }
+    const alasanTidakHadir =
+      status === "DILEWATI" ? String(alasan ?? "").trim() : null;
+    if (status === "DILEWATI" && !alasanTidakHadir)
+      throw ApiError.badRequest("Alasan tidak hadir wajib diisi");
+    if (alasanTidakHadir && alasanTidakHadir.length > 255)
+      throw ApiError.badRequest("Alasan tidak hadir maksimal 255 karakter");
     const entry = await prisma.antrean.findUnique({
       where: { id: BigInt(queueId) },
       include: {
@@ -459,7 +673,21 @@ export const queueService = {
       },
     });
     if (!entry) throw ApiError.notFound("Antrean tidak ditemukan");
+    // A patient may only cancel their own queue. Answer 404 (not 403) so the
+    // response does not reveal that another patient's queue exists.
+    if (
+      user.role === "PASIEN" &&
+      entry.recordPasien.userId !== BigInt(user.id)
+    ) {
+      throw ApiError.notFound("Antrean tidak ditemukan");
+    }
     await assertStaffOwnsClinic(user, entry.clinicId);
+    const ruleError = transitionError({
+      from: entry.status,
+      to: status,
+      role: user.role,
+    });
+    if (ruleError) throw ApiError.badRequest(ruleError);
 
     // Only write service_history on a genuine transition INTO SELESAI - guards
     // against a duplicate ServiceHistory insert (antreanId is @unique) if this
@@ -473,6 +701,8 @@ export const queueService = {
           status,
           timestampMulaiLayanan:
             status === "SEDANG_DILAYANI" ? new Date() : undefined,
+          // DILEWATI is final, so updatedAt of this write is the skip time.
+          alasanTidakHadir: alasanTidakHadir ?? undefined,
         },
         include: queueInclude,
       });
@@ -585,6 +815,10 @@ export const queueService = {
         pasienNama: activeAntrean.recordPasien.nama,
         clinicNama: activeAntrean.clinic.nama,
         clinicAlamat: activeAntrean.clinic.alamat,
+        // Gbr 3.72: clinic information on the home page.
+        clinicJamOperasional: activeAntrean.clinic.jamOperasional,
+        clinicJenisLayanan: activeAntrean.clinic.jenisLayanan,
+        clinicNoTelp: activeAntrean.clinic.noTelp,
         doctorNama: activeAntrean.doctor.nama,
         doctorSpesialisasi: activeAntrean.doctor.spesialisasi,
         ...(await liveQueueStatus(activeAntrean)),
